@@ -5,6 +5,9 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import com.aweagle.arrowbloom.BuildConfig
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -83,9 +86,12 @@ fun GameScreen(state: GameUiState, vm: GameViewModel) {
                     val title = if (state.mode == RunMode.DAILY) stringResource(R.string.daily_number, state.dailyNumber)
                     else if (state.gardenSize > 0) stringResource(R.string.level_in_garden, stringResource(state.gardenNameRes), state.gardenPosition, state.gardenSize)
                     else stringResource(R.string.level_in_endless, stringResource(state.gardenNameRes), state.level)
-                    Text(title, color = state.palette.accent, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp, maxLines = 1)
+                    // Debug builds only: long-press the title = next garden, long-press the score = auto-tap.
+                    val debugHook = if (BuildConfig.DEBUG) Modifier.pointerInput(Unit) { detectTapGestures(onLongPress = { vm.debugNextGarden() }) } else Modifier
+                    Text(title, color = state.palette.accent, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp, maxLines = 1, modifier = debugHook)
                     val scoreDesc = stringResource(R.string.a11y_score, state.score)
-                    Text(state.score.toString(), color = TextPrimary, fontSize = 28.sp, fontWeight = FontWeight.Black, modifier = Modifier.clearAndSetSemantics { contentDescription = scoreDesc })
+                    val scoreHook = if (BuildConfig.DEBUG) Modifier.pointerInput(Unit) { detectTapGestures(onLongPress = { vm.debugAutoTap() }) } else Modifier
+                    Text(state.score.toString(), color = TextPrimary, fontSize = 28.sp, fontWeight = FontWeight.Black, modifier = scoreHook.clearAndSetSemantics { contentDescription = scoreDesc })
                 }
                 StarsRow(stars = state.starsSoFar, size = 20.dp, modifier = Modifier.padding(end = 6.dp))
             }

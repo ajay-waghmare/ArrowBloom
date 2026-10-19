@@ -370,6 +370,26 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    // ----- debug-only test hooks (BuildConfig.DEBUG; R8 drops them from release) -----------
+
+    /** Taps the first escapable arrow, as a tester would with a hint. */
+    fun debugAutoTap() {
+        if (!BuildConfig.DEBUG) return
+        val e = engine ?: return
+        val id = e.getHintArrowId() ?: return
+        val arrow = e.board.getArrowById(id) ?: return
+        onCellTapped(arrow.head)
+    }
+
+    /** Jumps the Journey to the first level of the next garden. */
+    fun debugNextGarden() {
+        if (!BuildConfig.DEBUG) return
+        val current = engine?.takeIf { mode == RunMode.LEVEL }?.levelNumber ?: prefs.currentLevel
+        val next = Gardens.ALL.firstOrNull { it.firstLevel > current } ?: return
+        prefs.currentLevel = maxOf(prefs.currentLevel, next.firstLevel)
+        startLevel(next.firstLevel)
+    }
+
     fun onShared() {
         feedback.tap()
         analytics.event(Analytics.SHARE_RESULT)
