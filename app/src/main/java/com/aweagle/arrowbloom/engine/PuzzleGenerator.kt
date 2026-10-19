@@ -10,6 +10,8 @@ data class LevelConfig(
     val colorCount: Int = 4,
     val longArrowChance: Float = 0f,
     val maxBodyLength: Int = 1,
+    /** True = no arrow may block another: every arrow escapes from the start (the first board). */
+    val freeOnly: Boolean = false,
 )
 
 /**
@@ -81,7 +83,7 @@ object PuzzleGenerator {
                         colorIndex = random.nextInt(config.colorCount),
                     )
                     val candidateBoard = Board(rows, cols, placed + (nextId to candidate))
-                    if (isGraphAcyclic(candidateBoard)) {
+                    if (if (config.freeOnly) hasNoDependencies(candidateBoard) else isGraphAcyclic(candidateBoard)) {
                         placed[nextId] = candidate
                         occupied.addAll(body)
                         nextId++
@@ -100,6 +102,10 @@ object PuzzleGenerator {
     /** The head first, then [len] - 1 cells behind it, opposite to the direction of travel. */
     internal fun bodyFor(head: GridPos, dir: Direction, len: Int): List<GridPos> =
         List(len.coerceAtLeast(1)) { head.moved(dir.opposite, it) }
+
+    /** True when no arrow on [board] has anything in front of any of its cells. */
+    internal fun hasNoDependencies(board: Board): Boolean =
+        board.activeArrows.all { CollisionDetector.canArrowEscape(it, board) }
 
     /** True when the obstruction graph of [board] has no directed cycle. */
     internal fun isGraphAcyclic(board: Board): Boolean {

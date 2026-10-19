@@ -27,6 +27,10 @@ class GardensTest {
         assertEquals(4, board.totalArrows)
         // every arrow of level 1 is a single cell: nothing to explain yet
         assertTrue(board.arrows.values.all { it.body.size == 1 })
+        // and every one of them escapes from the start: the first tap can never be a blocked tap
+        assertTrue(board.arrows.values.all { CollisionDetector.canArrowEscape(it, board) })
+        assertTrue(Gardens.configFor(1).freeOnly)
+        assertTrue(!Gardens.configFor(2).freeOnly)
     }
 
     @Test fun arrowCount_neverExceedsTheBoard_andGrowsWithinAGarden() {

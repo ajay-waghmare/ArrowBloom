@@ -59,6 +59,7 @@ object Gardens {
             colorCount = g.colorCount,
             longArrowChance = g.longArrowChance,
             maxBodyLength = g.maxBodyLength,
+            freeOnly = level == 1,
         )
     }
 }
