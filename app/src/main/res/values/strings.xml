@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Arrow Bloom</string>
+    <string name="tap_arrows">Tap unblocked arrows to escape!</string>
+    <string name="level_title">Level %1$d</string>
+    <string name="level_complete">Level Cleared!</string>
+    <string name="next_level">Next Level</string>
+    <string name="hint">Hint</string>
+    <string name="restart">Restart</string>
+    <string name="moves_left">Moves: %1$d</string>
+</resources>
