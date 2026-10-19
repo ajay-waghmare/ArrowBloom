@@ -1,22 +1,47 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
 }
 
+// Release signing comes from keystore.properties at the repo root (gitignored):
+// storeFile, storePassword, keyAlias, keyPassword. Without the file the release build
+// is unsigned, which is fine for CI compiles and wrong for an upload.
+val keystoreProps = Properties().apply {
+    val f = rootProject.file("keystore.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
+}
+
 android {
     namespace = "com.aweagle.arrowbloom"
-    compileSdk = 35
+    // Google Play requires new apps and updates to target the previous year's API level by
+    // 31 August; from 31 Aug 2026 that is API 36. The annual bump is a release blocker.
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.aweagle.arrowbloom"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
+        // 1 = 1.0.0, the launch build. A versionCode can never be reused on Play.
         versionCode = 1
         versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        vectorDrawables {
-            useSupportLibrary = true
+        vectorDrawables { useSupportLibrary = true }
+
+        buildConfigField("String", "STORE_URL", "\"https://play.google.com/store/apps/details?id=com.aweagle.arrowbloom\"")
+        buildConfigField("String", "PRIVACY_POLICY_URL", "\"https://ajay-waghmare.github.io/app-policy/privacy-policy.html\"")
+    }
+
+    signingConfigs {
+        create("release") {
+            if (keystoreProps.isNotEmpty()) {
+                storeFile = file(keystoreProps.getProperty("storeFile"))
+                storePassword = keystoreProps.getProperty("storePassword")
+                keyAlias = keystoreProps.getProperty("keyAlias")
+                keyPassword = keystoreProps.getProperty("keyPassword")
+            }
         }
     }
 
@@ -24,13 +49,14 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            if (keystoreProps.isNotEmpty()) signingConfig = signingConfigs.getByName("release")
         }
         debug {
             applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+            // en-XA pseudolocale shows any string that is still hardcoded.
+            isPseudoLocalesEnabled = true
         }
     }
 
@@ -56,6 +82,11 @@ android {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
+    }
+
+    lint {
+        abortOnError = true
+        checkReleaseBuilds = true
     }
 }
 
