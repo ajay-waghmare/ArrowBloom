@@ -1,0 +1,27 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Arrow Bloom icon: Dynamic 4-way arrow bloom pattern centered in safe zone (26..82) -->
+    <!-- Up arrow (Cyan) -->
+    <path
+        android:fillColor="#00E5FF"
+        android:pathData="M54,28 L64,40 L57,40 L57,50 L51,50 L51,40 L44,40 Z" />
+    <!-- Right arrow (Amber) -->
+    <path
+        android:fillColor="#FFD600"
+        android:pathData="M80,54 L68,64 L68,57 L58,57 L58,51 L68,51 L68,44 Z" />
+    <!-- Down arrow (Pink) -->
+    <path
+        android:fillColor="#FF2A7A"
+        android:pathData="M54,80 L44,68 L51,68 L51,58 L57,58 L57,68 L64,68 Z" />
+    <!-- Left arrow (Emerald) -->
+    <path
+        android:fillColor="#00E676"
+        android:pathData="M28,54 L40,44 L40,51 L50,51 L50,57 L40,57 L40,64 Z" />
+    <!-- Center core jewel -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,48 L60,54 L54,60 L48,54 Z" />
+</vector>
