@@ -24,7 +24,7 @@ android {
         minSdk = 26
         targetSdk = 36
         // 1 = 1.0.0, the launch build. A versionCode can never be reused on Play.
-        versionCode = 3
+        versionCode = 4
         versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

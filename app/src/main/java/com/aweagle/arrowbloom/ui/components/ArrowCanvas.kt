@@ -63,8 +63,17 @@ import kotlin.math.sqrt
 /** How long the slide-and-bump after a wrong tap takes; the view model waits for it. */
 fun bumpDurationMs(freeSteps: Int): Long = (280L + 70L * freeSteps).coerceAtMost(900L)
 
-private val MAX_STROKE = 6.dp
-private val MAX_DOT = 3.2.dp
+/** Line thickness as a share of a cell, capped so lines stay slim on small boards. */
+private const val STROKE_PER_CELL = 0.13f
+private val MAX_STROKE = 5.dp
+private val MAX_DOT = 3.dp
+
+/** The first, small boards would otherwise get giant cells; past this size the board just sits smaller. */
+private val MAX_CELL = 64.dp
+
+/** Arrowhead size in line widths: length ahead of the head point, and half its width. */
+private const val HEAD_LENGTH = 2.3f
+private const val HEAD_HALF_WIDTH = 1.4f
 
 /** How far a line runs past the centre of its tail cell, in cells. */
 private const val TAIL = 0.16f
@@ -90,8 +99,8 @@ private class Geo(val cell: Float, val ox: Float, val oy: Float) {
     fun grid(p: Offset) = Offset((p.x - ox) / cell, (p.y - oy) / cell)
 }
 
-private fun geoFor(width: Float, height: Float, board: Board): Geo {
-    val cell = min(width / board.cols, height / board.rows)
+private fun geoFor(width: Float, height: Float, board: Board, maxCell: Float): Geo {
+    val cell = min(min(width / board.cols, height / board.rows), maxCell)
     return Geo(cell, (width - board.cols * cell) / 2f, (height - board.rows * cell) / 2f)
 }
 
@@ -244,16 +253,16 @@ fun ArrowCanvas(
             .semantics { this.contentDescription = contentDescription }
             .pointerInput(board) {
                 detectTapGestures { tap ->
-                    val geo = geoFor(size.width.toFloat(), size.height.toFloat(), board)
+                    val geo = geoFor(size.width.toFloat(), size.height.toFloat(), board, MAX_CELL.toPx())
                     nearestArrow(board, geo.grid(tap))?.let(onArrowTapped)
                 }
             },
     ) {
         @Suppress("UNUSED_EXPRESSION") bloomFrame
-        val geo = geoFor(size.width, size.height, board)
+        val geo = geoFor(size.width, size.height, board, MAX_CELL.toPx())
         val cell = geo.cell
         // Lines stay slim on small boards: a share of the cell, capped in dp.
-        val stroke = min(cell * 0.15f, MAX_STROKE.toPx())
+        val stroke = min(cell * STROKE_PER_CELL, MAX_STROKE.toPx())
         val dot = min(cell * 0.075f, MAX_DOT.toPx())
 
         // 1. Optional grid, then a dot on every empty playable cell.
@@ -350,13 +359,12 @@ fun DrawScope.drawLineArrow(points: List<Offset>, dir: Direction, strokeWidth: F
     }
     if (glow != null) drawPath(path, glow, style = Stroke(strokeWidth * 3.4f, cap = StrokeCap.Round, join = StrokeJoin.Round))
     drawPath(path, color, alpha = alpha, style = Stroke(strokeWidth, cap = StrokeCap.Butt, join = StrokeJoin.Miter))
-    val unit = strokeWidth / 0.15f
     val d = Offset(dir.dCol.toFloat(), dir.dRow.toFloat())
     val perp = Offset(-d.y, d.x)
     val head = points.last()
-    val tip = head + d * (0.40f * unit)
-    val base = head - d * (0.04f * unit)
-    val half = 0.25f * unit
+    val tip = head + d * (HEAD_LENGTH * strokeWidth)
+    val base = head - d * (0.25f * strokeWidth)
+    val half = HEAD_HALF_WIDTH * strokeWidth
     val tri = Path().apply {
         moveTo(tip.x, tip.y)
         lineTo(base.x + perp.x * half, base.y + perp.y * half)

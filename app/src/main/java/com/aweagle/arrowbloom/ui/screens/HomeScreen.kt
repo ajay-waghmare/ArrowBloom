@@ -262,7 +262,7 @@ private fun HeroBoard(accent: androidx.compose.ui.graphics.Color) {
         for (r in 0 until rows) for (c in 0 until cols) {
             if ((r to c) !in used) drawCircle(DotColor, cell * 0.075f, px(r, c))
         }
-        val stroke = cell * 0.15f
+        val stroke = cell * 0.13f
         for ((cells, dir, free) in arrows) {
             val pts = cells.map { (r, c) -> px(r, c) }
             val tail = pts[0] + (pts[0] - pts[1]) * 0.22f
