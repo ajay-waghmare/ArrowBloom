@@ -41,10 +41,10 @@ class RunCodecAndPrefsTest {
 
         assertTrue(p.recordStars(3, 2))
         assertFalse(p.recordStars(3, 1))      // not better
-        assertTrue(p.recordStars(3, 3))
-        assertTrue(p.recordStars(1, 3))
-        assertEquals(mapOf(1 to 3, 3 to 3), p.bestStars())
-        assertEquals("1:3,3:3", p.bestStarsCsv)
+        assertTrue(p.recordStars(3, 5))
+        assertTrue(p.recordStars(1, 4))
+        assertEquals(mapOf(1 to 4, 3 to 5), p.bestStars())
+        assertEquals("1:4,3:5", p.bestStarsCsv)
 
         p.savedRun = "v1|LEVEL|2|0|1|0|0"
         assertEquals("v1|LEVEL|2|0|1|0|0", p.savedRun)
@@ -57,8 +57,10 @@ class RunCodecAndPrefsTest {
         p.currentLevel = -4
         p.dailyStreak = -1
         p.dailyStars = 9
+        p.dailyHints = -2
         assertEquals(1, p.currentLevel)
         assertEquals(0, p.dailyStreak)
-        assertEquals(3, p.dailyStars)
+        assertEquals(5, p.dailyStars)
+        assertEquals(0, p.dailyHints)
     }
 }

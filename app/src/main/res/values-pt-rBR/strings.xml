@@ -46,7 +46,7 @@
     </plurals>
     <string name="bloom_cleared">Flor limpa!</string>
     <string name="daily_cleared">Flor do dia limpa!</string>
-    <string name="perfect_clear">Perfeito — nenhum coração perdido</string>
+    <string name="perfect_clear">Perfeito — nenhum coração perdido, nenhuma dica</string>
     <plurals name="blocked_taps">
         <item quantity="one">%1$d coração perdido</item>
         <item quantity="other">%1$d corações perdidos</item>
@@ -57,13 +57,13 @@
     <string name="coach_blocked">Bloqueada! Isso custou um coração. Libere primeiro o que está na frente</string>
     <string name="coach_keep_going">Boa. Continue — a ordem importa</string>
     <string name="a11y_board">Tabuleiro de %1$d por %2$d, faltam %3$d setas</string>
-    <string name="a11y_stars">%1$d de 3 estrelas</string>
+    <string name="a11y_stars">%1$d de 5 estrelas</string>
     <string name="htp_1_title">Toque e deslize</string>
     <string name="htp_1_text">Toque em uma seta e ela sai deslizando pela própria linha, na direção da ponta — se não houver nada na frente.</string>
     <string name="htp_2_title">A ordem importa</string>
     <string name="htp_2_text">Uma seta bloqueada volta e custa um coração. São três por tabuleiro. Libere primeiro o que está na frente dela.</string>
     <string name="htp_3_title">Florescer</string>
-    <string name="htp_3_text">Mantenha os três corações para ganhar três estrelas. Travou? Uma dica destaca uma seta que já pode sair. O botão # mostra a grade.</string>
+    <string name="htp_3_text">Limpe um tabuleiro sem perder corações nem usar dicas para ganhar cinco estrelas. Cada coração perdido e cada dica custam uma estrela. O botão # mostra a grade.</string>
     <string name="got_it">Entendi</string>
     <string name="settings">Configurações</string>
     <string name="back">Voltar</string>
@@ -89,4 +89,10 @@
     <string name="try_again">Tentar de novo</string>
     <string name="a11y_hearts">Restam %1$d de 3 corações</string>
     <string name="daily_same_for_everyone_short">O mesmo tabuleiro para todos</string>
+    <plurals name="hints_used">
+        <item quantity="one">%1$d dica usada</item>
+        <item quantity="many">%1$d dicas usadas</item>
+        <item quantity="other">%1$d dicas usadas</item>
+    </plurals>
+    <string name="no_hearts_lost">Nenhum coração perdido</string>
 </resources>

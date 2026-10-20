@@ -51,6 +51,7 @@ data class Outcome(
     val level: Int,
     val stars: Int,
     val heartsLost: Int,
+    val hintsUsed: Int,
     val isNewBest: Boolean,
     val dailyNumber: Int = 0,
     val streak: Int = 0,
@@ -95,6 +96,7 @@ data class GameUiState(
     val dailyDoneToday: Boolean = false,
     val dailyStarsToday: Int = 0,
     val dailyBlockedToday: Int = 0,
+    val dailyHintsToday: Int = 0,
     val dailyArrows: Int = 24,
     val dailyStreak: Int = 0,
     val bestStreak: Int = 0,
@@ -125,7 +127,6 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     private var mode: RunMode = RunMode.LEVEL
     private var dailyDate: LocalDate = LocalDate.now()
     private var difficulty: Difficulty = Difficulty.EASY
-    private var hintsUsed = 0
     private var seq = 0L
     private var boardSeq = 0L
     private var hintJob: Job? = null
@@ -196,7 +197,6 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     fun startLevel(level: Int) {
         val lvl = level.coerceAtLeast(1)
         mode = RunMode.LEVEL
-        hintsUsed = 0
         engine = GameEngine(PuzzleGenerator.generateLevel(lvl), lvl)
         analytics.event(Analytics.LEVEL_START, mapOf("level" to lvl))
         enterGame()
@@ -205,7 +205,6 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     fun startDaily() {
         dailyDate = LocalDate.now()
         mode = RunMode.DAILY
-        hintsUsed = 0
         engine = GameEngine(DailyBloom.board(dailyDate), PuzzleGenerator.DAILY_LEVEL_NUMBER)
         analytics.event(Analytics.DAILY_START, mapOf("number" to DailyBloom.numberFor(dailyDate)))
         enterGame()
@@ -321,7 +320,7 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
         music.setIntensity(0f)
         feedback.complete()
         prefs.levelsCleared += 1
-        if (e.blockedTaps == 0) prefs.perfectClears += 1
+        if (stars == Scoring.MAX_STARS) prefs.perfectClears += 1
         if (mode == RunMode.LEVEL) prefs.coached = true
         prefs.savedRun = null
 
@@ -330,7 +329,7 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
             if (level > prefs.highestCleared) prefs.highestCleared = level
             if (prefs.currentLevel <= level) prefs.currentLevel = level + 1
             analytics.event(Analytics.LEVEL_COMPLETE, mapOf("level" to level, "stars" to stars, "blocked" to e.blockedTaps))
-            Outcome(RunMode.LEVEL, level, stars, e.blockedTaps, newBest)
+            Outcome(RunMode.LEVEL, level, stars, e.blockedTaps, e.hintsUsed, newBest)
         } else {
             val today = dailyDate.toEpochDay()
             val advanced = StreakRules.advance(prefs.lastDailyDay, today, prefs.dailyStreak, prefs.streakShieldUsed)
@@ -344,19 +343,21 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
                 prefs.lastDailyDay = today
                 prefs.dailyStars = stars
                 prefs.dailyBlockedTaps = e.blockedTaps
+                prefs.dailyHints = e.hintsUsed
             } else if (stars > prefs.dailyStars) {
                 prefs.dailyStars = stars
                 prefs.dailyBlockedTaps = e.blockedTaps
+                prefs.dailyHints = e.hintsUsed
             }
             val number = DailyBloom.numberFor(dailyDate)
             analytics.event(Analytics.DAILY_COMPLETE, mapOf("number" to number, "stars" to stars))
             Outcome(
-                RunMode.DAILY, level, stars, e.blockedTaps,
+                RunMode.DAILY, level, stars, e.blockedTaps, e.hintsUsed,
                 isNewBest = advanced != null,
                 dailyNumber = number,
                 streak = prefs.dailyStreak,
                 usedShield = usedShield,
-                shareText = DailyBloom.shareText(number, stars, e.totalArrowsCount, e.blockedTaps, BuildConfig.STORE_URL),
+                shareText = DailyBloom.shareText(number, stars, e.totalArrowsCount, e.blockedTaps, e.hintsUsed, BuildConfig.STORE_URL),
             )
         }
         _uiState.update { refreshHome(gameState(it)).copy(outcome = outcome, coachTextRes = null, hintArrowId = null) }
@@ -367,8 +368,7 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
         if (_uiState.value.outcome != null || _uiState.value.failed) return
         val left = _uiState.value.hintsRemaining
         if (left <= 0) { toast(getApplication<Application>().getString(R.string.no_hints_left)); return }
-        val id = e.getHintArrowId() ?: return
-        hintsUsed++
+        val id = e.useHint() ?: return
         music.hintPing()
         feedback.tap()
         analytics.event(Analytics.HINT_USED, mapOf("level" to e.levelNumber))
@@ -504,6 +504,7 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
             dailyDoneToday = dailyDone,
             dailyStarsToday = if (dailyDone) prefs.dailyStars else 0,
             dailyBlockedToday = if (dailyDone) prefs.dailyBlockedTaps else 0,
+            dailyHintsToday = if (dailyDone) prefs.dailyHints else 0,
             dailyArrows = dailyArrowsFor(today),
             dailyStreak = streak,
             bestStreak = prefs.bestStreak,
@@ -535,7 +536,7 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
                 dateSeed = if (mode == RunMode.DAILY) DailyBloom.seedFor(dailyDate) else 0L,
                 escapeOrder = e.escapeOrder,
                 blockedTaps = e.blockedTaps,
-                hintsUsed = hintsUsed,
+                hintsUsed = e.hintsUsed,
             ),
         )
     }
@@ -547,11 +548,10 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
         val board = if (run.mode == RunMode.DAILY) DailyBloom.board(today) else PuzzleGenerator.generateLevel(run.level)
         val e = GameEngine(board, if (run.mode == RunMode.DAILY) PuzzleGenerator.DAILY_LEVEL_NUMBER else run.level)
         val fullBoardDifficulty = PuzzleStats.difficultyOf(board)
-        e.restore(run.escapeOrder, run.blockedTaps)
+        e.restore(run.escapeOrder, run.blockedTaps, run.hintsUsed)
         if (e.isLevelCompleted || e.isFailed || e.escapeOrder.isEmpty()) { prefs.savedRun = null; return }
         mode = run.mode
         dailyDate = today
-        hintsUsed = run.hintsUsed
         engine = e
         boardSeq++
         difficulty = fullBoardDifficulty

@@ -44,7 +44,7 @@
     </plurals>
     <string name="bloom_cleared">Çiçek açtı!</string>
     <string name="daily_cleared">Günün Çiçeği tamamlandı!</string>
-    <string name="perfect_clear">Mükemmel — hiç kalp kaybetmedin</string>
+    <string name="perfect_clear">Mükemmel — kalp kaybı yok, ipucu yok</string>
     <plurals name="blocked_taps">
         <item quantity="one">%1$d kalp kaybedildi</item>
         <item quantity="other">%1$d kalp kaybedildi</item>
@@ -54,13 +54,13 @@
     <string name="coach_blocked">Engellendi! Bu bir kalbe mal oldu. Önce önündekini temizle</string>
     <string name="coach_keep_going">Güzel. Devam et — sıra önemli</string>
     <string name="a11y_board">%1$d x %2$d tahta, %3$d ok kaldı</string>
-    <string name="a11y_stars">3 yıldızdan %1$d</string>
+    <string name="a11y_stars">5 yıldızdan %1$d</string>
     <string name="htp_1_title">Dokun ve kaydır</string>
     <string name="htp_1_text">Bir oka dokun; ucunun gösterdiği yöne doğru kendi çizgisi boyunca kayarak çıkar — ucunun önünde bir şey yoksa.</string>
     <string name="htp_2_title">Sıra önemli</string>
     <string name="htp_2_text">Engellenen ok geri seker ve bir kalbe mal olur. Her tahtada üç kalbin var. Önce önündekini temizle.</string>
     <string name="htp_3_title">Çiçek aç</string>
-    <string name="htp_3_text">Üç yıldız için üç kalbi de koru. Takıldın mı? İpucu, şimdi çıkabilecek bir oku yakar. # düğmesi ızgarayı gösterir.</string>
+    <string name="htp_3_text">Beş yıldız için bir tahtayı kalp kaybetmeden ve ipucu kullanmadan temizle. Kaybedilen her kalp ve kullanılan her ipucu bir yıldıza mal olur. # düğmesi ızgarayı gösterir.</string>
     <string name="got_it">Anladım</string>
     <string name="settings">Ayarlar</string>
     <string name="back">Geri</string>
@@ -86,4 +86,9 @@
     <string name="try_again">Tekrar dene</string>
     <string name="a11y_hearts">3 kalpten %1$d kaldı</string>
     <string name="daily_same_for_everyone_short">Herkes için aynı tahta</string>
+    <plurals name="hints_used">
+        <item quantity="one">%1$d ipucu kullanıldı</item>
+        <item quantity="other">%1$d ipucu kullanıldı</item>
+    </plurals>
+    <string name="no_hearts_lost">Kalp kaybı yok</string>
 </resources>

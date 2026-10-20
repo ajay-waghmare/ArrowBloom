@@ -53,7 +53,7 @@
     </plurals>
     <string name="bloom_cleared">Bloom cleared!</string>
     <string name="daily_cleared">Daily Bloom cleared!</string>
-    <string name="perfect_clear">Perfect — not a single heart lost</string>
+    <string name="perfect_clear">Perfect — no hearts lost, no hints</string>
     <plurals name="blocked_taps">
         <item quantity="one">%1$d heart lost</item>
         <item quantity="other">%1$d hearts lost</item>
@@ -63,7 +63,7 @@
     <string name="coach_blocked">Blocked! That cost a heart. Clear what is in front of it first</string>
     <string name="coach_keep_going">Nice. Keep going — the order matters</string>
     <string name="a11y_board">Board of %1$d by %2$d, %3$d arrows left</string>
-    <string name="a11y_stars">%1$d of 3 stars</string>
+    <string name="a11y_stars">%1$d of 5 stars</string>
 
     <!-- How to play -->
     <string name="htp_1_title">Tap to slide out</string>
@@ -71,7 +71,7 @@
     <string name="htp_2_title">Order matters</string>
     <string name="htp_2_text">A blocked arrow bumps back and costs a heart. You have three per board. Clear what is in front of it first.</string>
     <string name="htp_3_title">Bloom</string>
-    <string name="htp_3_text">Keep all three hearts for three stars. Stuck? A hint lights up an arrow that can leave now. The # button shows the grid.</string>
+    <string name="htp_3_text">Clear a board without losing a heart or using a hint for five stars. Each heart lost and each hint costs one star. The # button shows the grid.</string>
     <string name="got_it">Got it</string>
 
     <!-- Settings -->
@@ -100,4 +100,9 @@
     <string name="try_again">Try again</string>
     <string name="a11y_hearts">%1$d of 3 hearts left</string>
     <string name="daily_same_for_everyone_short">Same board for everyone</string>
+    <plurals name="hints_used">
+        <item quantity="one">%1$d hint used</item>
+        <item quantity="other">%1$d hints used</item>
+    </plurals>
+    <string name="no_hearts_lost">No hearts lost</string>
 </resources>

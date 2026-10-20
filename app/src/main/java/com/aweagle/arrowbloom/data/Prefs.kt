@@ -3,6 +3,7 @@ package com.aweagle.arrowbloom.data
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
+import com.aweagle.arrowbloom.engine.Scoring
 
 /**
  * Every persisted value of the game, in one SharedPreferences file. The internal constructor
@@ -35,7 +36,7 @@ class Prefs internal constructor(private val sp: SharedPreferences) {
             val kv = part.split(":")
             val level = kv.getOrNull(0)?.trim()?.toIntOrNull() ?: return@mapNotNull null
             val stars = kv.getOrNull(1)?.trim()?.toIntOrNull() ?: return@mapNotNull null
-            level to stars.coerceIn(0, 3)
+            level to stars.coerceIn(0, Scoring.MAX_STARS)
         }.toMap()
 
     /** Records [stars] for [level] if better than before; returns true when it was. */
@@ -57,11 +58,16 @@ class Prefs internal constructor(private val sp: SharedPreferences) {
 
     var dailyStars: Int
         get() = sp.getInt(KEY_DAILY_STARS, 0)
-        set(value) = sp.edit { putInt(KEY_DAILY_STARS, value.coerceIn(0, 3)) }
+        set(value) = sp.edit { putInt(KEY_DAILY_STARS, value.coerceIn(0, Scoring.MAX_STARS)) }
 
     var dailyBlockedTaps: Int
         get() = sp.getInt(KEY_DAILY_BLOCKED, 0)
         set(value) = sp.edit { putInt(KEY_DAILY_BLOCKED, value.coerceAtLeast(0)) }
+
+    /** Hints used on the best Daily Bloom run of the day (each costs a star). */
+    var dailyHints: Int
+        get() = sp.getInt(KEY_DAILY_HINTS, 0)
+        set(value) = sp.edit { putInt(KEY_DAILY_HINTS, value.coerceAtLeast(0)) }
 
     var dailyStreak: Int
         get() = sp.getInt(KEY_STREAK, 0)
@@ -133,6 +139,7 @@ class Prefs internal constructor(private val sp: SharedPreferences) {
         private const val KEY_DAILY_DAY = "daily_last_day"
         private const val KEY_DAILY_STARS = "daily_stars"
         private const val KEY_DAILY_BLOCKED = "daily_blocked"
+        private const val KEY_DAILY_HINTS = "daily_hints"
         private const val KEY_STREAK = "daily_streak"
         private const val KEY_BEST_STREAK = "best_streak"
         private const val KEY_SHIELD_USED = "streak_shield_used"

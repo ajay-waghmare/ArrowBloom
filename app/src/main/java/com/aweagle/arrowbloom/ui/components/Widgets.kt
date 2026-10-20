@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aweagle.arrowbloom.R
+import com.aweagle.arrowbloom.engine.Scoring
 import com.aweagle.arrowbloom.ui.Button
 import com.aweagle.arrowbloom.ui.IconButton
 import com.aweagle.arrowbloom.ui.pressable
@@ -76,12 +77,12 @@ fun ScreenHeader(title: String, onBack: () -> Unit) {
     }
 }
 
-/** Three stars, [stars] of them lit, read by TalkBack as one phrase. */
+/** Five stars, [stars] of them lit, read by TalkBack as one phrase. */
 @Composable
 fun StarsRow(stars: Int, modifier: Modifier = Modifier, size: Dp = 20.dp, dimUnlit: Color = StarEmpty) {
     val desc = stringResource(R.string.a11y_stars, stars)
     Row(modifier.clearAndSetSemantics { contentDescription = desc }, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-        repeat(3) { i ->
+        repeat(Scoring.MAX_STARS) { i ->
             Icon(Icons.Filled.Star, contentDescription = null, tint = if (i < stars) StarGold else dimUnlit, modifier = Modifier.size(size))
         }
     }

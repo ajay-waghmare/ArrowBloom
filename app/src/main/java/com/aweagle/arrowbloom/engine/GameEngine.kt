@@ -45,6 +45,8 @@ class GameEngine(
         private set
     var blockedTaps: Int = 0
         private set
+    var hintsUsed: Int = 0
+        private set
 
     private val history = ArrayList<Int>()
 
@@ -59,7 +61,7 @@ class GameEngine(
     val isFailed: Boolean get() = heartsLeft == 0 && !board.isCompleted
     val remainingArrowsCount: Int get() = board.activeArrows.size
     val totalArrowsCount: Int get() = board.totalArrows
-    val starsSoFar: Int get() = Scoring.starsFor(blockedTaps)
+    val starsSoFar: Int get() = Scoring.starsFor(blockedTaps, hintsUsed)
 
     fun onCellTapped(pos: GridPos): TapResult {
         val arrow = board.getArrowAt(pos) ?: return TapResult.EmptyCell
@@ -102,6 +104,14 @@ class GameEngine(
      * A free arrow to suggest: the one standing in front of the most other arrows, so the
      * hint opens the board up instead of picking an edge arrow nobody waits for.
      */
+    /** Shows a hint: the arrow to suggest, counted against the stars. Null when there is nothing to show. */
+    fun useHint(): Int? {
+        if (isFailed || isLevelCompleted) return null
+        val id = getHintArrowId() ?: return null
+        hintsUsed++
+        return id
+    }
+
     fun getHintArrowId(): Int? {
         val free = CollisionDetector.findEscapableArrows(board)
         if (free.isEmpty()) return null
@@ -116,10 +126,12 @@ class GameEngine(
     /**
      * Rebuilds a saved run by replaying [order]: escapes in sequence and [BLOCKED_MARK]s as
      * lost hearts. Stops at the first id that cannot escape, which only happens with a
-     * corrupt save. [blockedTapsBefore] is a floor for saves written without marks.
+     * corrupt save. [blockedTapsBefore] is a floor for saves written without marks; [hintsUsedBefore]
+     * restores the hint count, which costs stars.
      * Returns how many escapes were applied.
      */
-    fun restore(order: List<Int>, blockedTapsBefore: Int): Int {
+    fun restore(order: List<Int>, blockedTapsBefore: Int, hintsUsedBefore: Int = 0): Int {
+        hintsUsed = hintsUsedBefore.coerceAtLeast(0)
         var applied = 0
         var blocked = 0
         for (id in order) {

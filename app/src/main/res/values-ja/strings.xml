@@ -42,7 +42,7 @@
     </plurals>
     <string name="bloom_cleared">クリア!</string>
     <string name="daily_cleared">デイリーブルーム クリア!</string>
-    <string name="perfect_clear">パーフェクト!ハートを1つも失いませんでした</string>
+    <string name="perfect_clear">パーフェクト!ハートもヒントも使わずクリア</string>
     <plurals name="blocked_taps">
         <item quantity="other">ハートを%1$d個失いました</item>
     </plurals>
@@ -51,13 +51,13 @@
     <string name="coach_blocked">ブロック!ハートを1つ失いました。先に前にあるものをどかしましょう</string>
     <string name="coach_keep_going">いいね。この調子 — 順番が大事</string>
     <string name="a11y_board">%1$d×%2$dの盤面、残り%3$d本</string>
-    <string name="a11y_stars">星 %1$d / 3</string>
+    <string name="a11y_stars">星%1$d/5</string>
     <string name="htp_1_title">タップでスライド</string>
     <string name="htp_1_text">矢印をタップすると、先端の向きへ自分の線に沿ってスライドして出ていきます。先端の前に何もなければ。</string>
     <string name="htp_2_title">順番が大事</string>
     <string name="htp_2_text">ふさがれた矢印は跳ね返り、ハートを1つ失います。ハートは1盤面につき3つ。先に前にあるものをどかしましょう。</string>
     <string name="htp_3_title">咲かせる</string>
-    <string name="htp_3_text">ハートを3つ守れば星3つ。行き詰まったら?ヒントが今すぐ出られる矢印を光らせます。#ボタンでマス目を表示できます。</string>
+    <string name="htp_3_text">ハートを失わず、ヒントも使わずにクリアすると星5つ。ハートを1つ失うか、ヒントを1回使うごとに星が1つ減ります。#ボタンでマス目を表示できます。</string>
     <string name="got_it">わかった</string>
     <string name="settings">設定</string>
     <string name="back">戻る</string>
@@ -83,4 +83,8 @@
     <string name="try_again">もう一度</string>
     <string name="a11y_hearts">ハート残り%1$d/3</string>
     <string name="daily_same_for_everyone_short">みんな同じ盤面</string>
+    <plurals name="hints_used">
+        <item quantity="other">ヒントを%1$d回使用</item>
+    </plurals>
+    <string name="no_hearts_lost">ハートを失わずにクリア</string>
 </resources>

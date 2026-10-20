@@ -30,7 +30,7 @@ class GameEngineTest {
         assertEquals(20, r2.scoreDelta)
         assertTrue(r2.isLevelCompleted)
         assertEquals(30, e.score)
-        assertEquals(3, e.starsSoFar)
+        assertEquals(5, e.starsSoFar)
         assertEquals(TapResult.Ignored, e.onArrowTapped(1))
     }
 
@@ -47,7 +47,7 @@ class GameEngineTest {
         assertEquals(ArrowState.BLOCKED, e.board.getArrowById(1)?.state)
         e.resetBlockedState(1)
         assertEquals(ArrowState.IDLE, e.board.getArrowById(1)?.state)
-        assertEquals(2, e.starsSoFar)
+        assertEquals(4, e.starsSoFar)
     }
 
     @Test fun threeWrongTaps_loseTheBoard() {
@@ -60,6 +60,27 @@ class GameEngineTest {
         assertTrue(e.isFailed)
         assertEquals(0, e.starsSoFar)
         assertEquals(TapResult.Ignored, e.onArrowTapped(2))
+    }
+
+    @Test fun hints_costStars_andAreRestored() {
+        val e = engine(withC = true)
+        assertEquals(2, e.useHint())
+        assertEquals(1, e.hintsUsed)
+        assertEquals(4, e.starsSoFar)
+        e.onArrowTapped(1)                 // wrong: another star
+        assertEquals(3, e.starsSoFar)
+        val restored = engine(withC = true)
+        restored.restore(e.escapeOrder.toList(), blockedTapsBefore = 0, hintsUsedBefore = e.hintsUsed)
+        assertEquals(1, restored.hintsUsed)
+        assertEquals(3, restored.starsSoFar)
+    }
+
+    @Test fun noHint_onAFinishedBoard() {
+        val e = engine()
+        e.onArrowTapped(2); e.onArrowTapped(1)
+        assertTrue(e.isLevelCompleted)
+        assertEquals(null, e.useHint())
+        assertEquals(0, e.hintsUsed)
     }
 
     @Test fun hint_picksTheArrowOthersWaitFor() {

@@ -42,7 +42,7 @@
     </plurals>
     <string name="bloom_cleared">블룸 클리어!</string>
     <string name="daily_cleared">데일리 블룸 클리어!</string>
-    <string name="perfect_clear">완벽해요 — 하트를 하나도 잃지 않았어요</string>
+    <string name="perfect_clear">완벽해요 — 하트도 힌트도 쓰지 않았어요</string>
     <plurals name="blocked_taps">
         <item quantity="other">하트 %1$d개 잃음</item>
     </plurals>
@@ -51,13 +51,13 @@
     <string name="coach_blocked">막혔어요! 하트 하나를 잃었어요. 앞에 있는 것부터 치우세요</string>
     <string name="coach_keep_going">좋아요. 계속 — 순서가 중요해요</string>
     <string name="a11y_board">%1$d×%2$d 보드, 화살표 %3$d개 남음</string>
-    <string name="a11y_stars">별 %1$d / 3</string>
+    <string name="a11y_stars">별 %1$d/5개</string>
     <string name="htp_1_title">탭해서 빼내기</string>
     <string name="htp_1_text">화살표를 탭하면 머리가 가리키는 방향으로 자기 선을 따라 미끄러져 나가요. 머리 앞에 아무것도 없을 때만요.</string>
     <string name="htp_2_title">순서가 중요해요</string>
     <string name="htp_2_text">막힌 화살표는 튕겨 돌아오고 하트 하나를 잃어요. 판마다 하트는 세 개. 앞에 있는 것부터 치우세요.</string>
     <string name="htp_3_title">피우기</string>
-    <string name="htp_3_text">하트 세 개를 모두 지키면 별 세 개. 막혔나요? 힌트가 지금 나갈 수 있는 화살표를 비춰 줘요. # 버튼은 격자를 보여 줘요.</string>
+    <string name="htp_3_text">하트를 잃지 않고 힌트도 쓰지 않으면 별 다섯 개. 하트를 하나 잃거나 힌트를 한 번 쓸 때마다 별이 하나 줄어요. # 버튼은 격자를 보여 줘요.</string>
     <string name="got_it">알겠어요</string>
     <string name="settings">설정</string>
     <string name="back">뒤로</string>
@@ -83,4 +83,8 @@
     <string name="try_again">다시 하기</string>
     <string name="a11y_hearts">하트 %1$d/3개 남음</string>
     <string name="daily_same_for_everyone_short">모두에게 같은 판</string>
+    <plurals name="hints_used">
+        <item quantity="other">힌트 %1$d번 사용</item>
+    </plurals>
+    <string name="no_hearts_lost">하트를 잃지 않음</string>
 </resources>

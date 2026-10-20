@@ -37,14 +37,15 @@ class DailyBloomTest {
     }
 
     @Test fun shareText_isSpoilerFree() {
-        val t = DailyBloom.shareText(number = 12, stars = 3, arrows = 24, blockedTaps = 0, storeUrl = "https://example.test/app")
+        val t = DailyBloom.shareText(number = 12, stars = 5, arrows = 24, blockedTaps = 0, hintsUsed = 0, storeUrl = "https://example.test/app")
         assertTrue(t.contains("Daily #12"))
-        assertTrue(t.contains("⭐⭐⭐"))
-        assertTrue(t.contains("no hearts lost"))
+        assertTrue(t.contains("⭐⭐⭐⭐⭐ "))
+        assertTrue(t.contains("perfect clear"))
         assertTrue(t.endsWith("https://example.test/app"))
-        val u = DailyBloom.shareText(number = 3, stars = 1, arrows = 20, blockedTaps = 2, storeUrl = "u")
-        assertTrue(u.contains("⭐☆☆"))
-        assertTrue(u.contains("2 hearts lost"))
-        assertTrue(DailyBloom.shareText(1, 2, 20, 1, "u").contains("1 heart lost\n"))
+        val u = DailyBloom.shareText(number = 3, stars = 1, arrows = 20, blockedTaps = 2, hintsUsed = 2, storeUrl = "u")
+        assertTrue(u.contains("⭐☆☆☆☆"))
+        assertTrue(u.contains("2 hearts lost, 2 hints"))
+        assertTrue(DailyBloom.shareText(1, 4, 20, 1, 0, "u").contains("1 heart lost\n"))
+        assertTrue(DailyBloom.shareText(1, 4, 20, 0, 1, "u").contains("no hearts lost, 1 hint\n"))
     }
 }

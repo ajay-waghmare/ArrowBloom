@@ -53,6 +53,7 @@ import com.aweagle.arrowbloom.R
 import com.aweagle.arrowbloom.daily.DailyBloom
 import com.aweagle.arrowbloom.data.RunMode
 import com.aweagle.arrowbloom.engine.Direction
+import com.aweagle.arrowbloom.engine.Scoring
 import com.aweagle.arrowbloom.ui.GameUiState
 import com.aweagle.arrowbloom.ui.GameViewModel
 import com.aweagle.arrowbloom.ui.IconButton
@@ -161,8 +162,8 @@ fun HomeScreen(state: GameUiState, vm: GameViewModel) {
                         Text(stringResource(R.string.daily_number, state.dailyNumber), color = TextPrimary, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                         Text(
                             when {
-                                state.dailyDoneToday && state.dailyBlockedToday == 0 -> stringResource(R.string.perfect_clear_short)
-                                state.dailyDoneToday -> res.getQuantityString(R.plurals.blocked_taps, state.dailyBlockedToday, state.dailyBlockedToday)
+                                state.dailyDoneToday && state.dailyStarsToday == Scoring.MAX_STARS -> stringResource(R.string.perfect_clear_short)
+                                state.dailyDoneToday -> resultLine(res, state.dailyBlockedToday, state.dailyHintsToday)
                                 else -> stringResource(R.string.daily_same_for_everyone)
                             },
                             color = TextSecondary, style = MaterialTheme.typography.bodyMedium,
@@ -195,7 +196,7 @@ fun HomeScreen(state: GameUiState, vm: GameViewModel) {
                             stringResource(R.string.share), leading = Icons.Filled.Share, container = dailyAccent, modifier = Modifier.weight(1f),
                             onClick = {
                                 vm.onShared()
-                                shareText(context, DailyBloom.shareText(state.dailyNumber, state.dailyStarsToday, state.dailyArrows, state.dailyBlockedToday, BuildConfig.STORE_URL))
+                                shareText(context, DailyBloom.shareText(state.dailyNumber, state.dailyStarsToday, state.dailyArrows, state.dailyBlockedToday, state.dailyHintsToday, BuildConfig.STORE_URL))
                             },
                         )
                         SoftButton(stringResource(R.string.daily_replay), modifier = Modifier.weight(1f), onClick = { vm.feedback.tap(); vm.startDaily() })

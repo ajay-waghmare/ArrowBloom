@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aweagle.arrowbloom.R
 import com.aweagle.arrowbloom.data.RunMode
+import com.aweagle.arrowbloom.engine.Scoring
 import com.aweagle.arrowbloom.ui.GameUiState
 import com.aweagle.arrowbloom.ui.GameViewModel
 import com.aweagle.arrowbloom.ui.LocalReduceMotion
@@ -123,9 +124,10 @@ fun OutcomeOverlay(outcome: Outcome, state: GameUiState, vm: GameViewModel) {
         Spacer(Modifier.height(18.dp))
         PoppingStars(outcome.stars, reduceMotion)
         Spacer(Modifier.height(12.dp))
+        val perfect = outcome.stars == Scoring.MAX_STARS
         Text(
-            if (outcome.heartsLost == 0) stringResource(R.string.perfect_clear) else res.getQuantityString(R.plurals.blocked_taps, outcome.heartsLost, outcome.heartsLost),
-            color = if (outcome.heartsLost == 0) GoldText else TextSecondary,
+            if (perfect) stringResource(R.string.perfect_clear) else resultLine(res, outcome.heartsLost, outcome.hintsUsed),
+            color = if (perfect) GoldText else TextSecondary,
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.SemiBold,
             textAlign = TextAlign.Center,
@@ -187,24 +189,29 @@ fun FailOverlay(state: GameUiState, vm: GameViewModel) {
 @Composable
 private fun PoppingStars(stars: Int, reduceMotion: Boolean) {
     val desc = stringResource(R.string.a11y_stars, stars)
-    Row(Modifier.clearAndSetSemantics { contentDescription = desc }, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        repeat(3) { i ->
+    Row(Modifier.clearAndSetSemantics { contentDescription = desc }, horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.Top) {
+        repeat(Scoring.MAX_STARS) { i ->
             val lit = i < stars
+            val big = i == Scoring.MAX_STARS / 2
+            val near = kotlin.math.abs(i - Scoring.MAX_STARS / 2) == 1
+            val box = if (big) 58.dp else if (near) 50.dp else 44.dp
+            val drop = if (big) 0.dp else if (near) 8.dp else 18.dp
             val scale = remember { Animatable(if (reduceMotion) 1f else 0f) }
             LaunchedEffect(Unit) {
                 if (!reduceMotion) {
-                    delay(140L * i + 120L)
+                    delay(110L * i + 120L)
                     scale.animateTo(1f, spring(dampingRatio = 0.45f, stiffness = Spring.StiffnessMedium))
                 }
             }
             Box(
                 Modifier
-                    .size(56.dp)
+                    .padding(top = drop)
+                    .size(box)
                     .graphicsLayer { scaleX = scale.value; scaleY = scale.value }
                     .background(if (lit) StarGold.copy(alpha = 0.16f) else SurfaceSoft, CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(Icons.Filled.Star, contentDescription = null, tint = if (lit) StarGold else StarEmpty, modifier = Modifier.size(36.dp))
+                Icon(Icons.Filled.Star, contentDescription = null, tint = if (lit) StarGold else StarEmpty, modifier = Modifier.size(box * 0.64f))
             }
         }
     }
@@ -253,3 +260,9 @@ private fun HowToStep(number: String, title: String, text: String) {
         }
     }
 }
+
+/** "No hearts lost · 1 hint used" style summary of a cleared board that is not perfect. */
+fun resultLine(res: android.content.res.Resources, heartsLost: Int, hintsUsed: Int): String = buildList {
+    add(if (heartsLost == 0) res.getString(R.string.no_hearts_lost) else res.getQuantityString(R.plurals.blocked_taps, heartsLost, heartsLost))
+    if (hintsUsed > 0) add(res.getQuantityString(R.plurals.hints_used, hintsUsed, hintsUsed))
+}.joinToString(" · ")

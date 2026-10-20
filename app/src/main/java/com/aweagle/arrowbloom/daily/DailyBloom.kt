@@ -26,13 +26,17 @@ object DailyBloom {
      * Spoiler-free result card: stars, the clean-solve line and the link. Kept in English on
      * purpose, the way Wordle's is: it travels between players who do not share a language.
      */
-    fun shareText(number: Int, stars: Int, arrows: Int, blockedTaps: Int, storeUrl: String): String {
-        val starRow = "⭐".repeat(stars.coerceIn(0, Scoring.MAX_STARS)) + "☆".repeat(Scoring.MAX_STARS - stars.coerceIn(0, Scoring.MAX_STARS))
-        val clean = if (blockedTaps == 0) "no hearts lost" else "$blockedTaps heart${if (blockedTaps == 1) "" else "s"} lost"
+    fun shareText(number: Int, stars: Int, arrows: Int, blockedTaps: Int, hintsUsed: Int, storeUrl: String): String {
+        val lit = stars.coerceIn(0, Scoring.MAX_STARS)
+        val starRow = "⭐".repeat(lit) + "☆".repeat(Scoring.MAX_STARS - lit)
+        val clean = if (blockedTaps == 0 && hintsUsed == 0) "perfect clear" else listOfNotNull(
+            if (blockedTaps == 0) "no hearts lost" else "$blockedTaps heart${if (blockedTaps == 1) "" else "s"} lost",
+            if (hintsUsed > 0) "$hintsUsed hint${if (hintsUsed == 1) "" else "s"}" else null,
+        ).joinToString(", ")
         return buildString {
             append("🌸 Arrow Bloom Daily #").append(number).append('\n')
             append(starRow).append(" · ").append(arrows).append(" arrows · ").append(clean).append('\n')
-            append("Can you clear it without losing a heart? ").append(storeUrl)
+            append("Can you get all five stars? ").append(storeUrl)
         }
     }
 }

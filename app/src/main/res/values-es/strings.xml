@@ -46,7 +46,7 @@
     </plurals>
     <string name="bloom_cleared">¡Flor despejada!</string>
     <string name="daily_cleared">¡Flor diaria despejada!</string>
-    <string name="perfect_clear">Perfecto: no perdiste ni un corazón</string>
+    <string name="perfect_clear">Perfecto: sin perder corazones ni usar pistas</string>
     <plurals name="blocked_taps">
         <item quantity="one">%1$d corazón perdido</item>
         <item quantity="other">%1$d corazones perdidos</item>
@@ -57,13 +57,13 @@
     <string name="coach_blocked">¡Bloqueada! Te ha costado un corazón. Despeja primero lo que tiene delante</string>
     <string name="coach_keep_going">Bien. Sigue así: el orden importa</string>
     <string name="a11y_board">Tablero de %1$d por %2$d, quedan %3$d flechas</string>
-    <string name="a11y_stars">%1$d de 3 estrellas</string>
+    <string name="a11y_stars">%1$d de 5 estrellas</string>
     <string name="htp_1_title">Toca y desliza</string>
     <string name="htp_1_text">Toca una flecha y saldrá deslizándose por su propia línea, hacia donde apunta su punta, si no hay nada delante.</string>
     <string name="htp_2_title">El orden importa</string>
     <string name="htp_2_text">Una flecha bloqueada rebota y te cuesta un corazón. Tienes tres por tablero. Despeja primero lo que tiene delante.</string>
     <string name="htp_3_title">Florece</string>
-    <string name="htp_3_text">Conserva los tres corazones para ganar tres estrellas. ¿Atascado? Una pista ilumina una flecha que ya puede salir. El botón # muestra la cuadrícula.</string>
+    <string name="htp_3_text">Despeja un tablero sin perder corazones ni usar pistas para ganar cinco estrellas. Cada corazón perdido y cada pista cuestan una estrella. El botón # muestra la cuadrícula.</string>
     <string name="got_it">Entendido</string>
     <string name="settings">Ajustes</string>
     <string name="back">Atrás</string>
@@ -89,4 +89,10 @@
     <string name="try_again">Reintentar</string>
     <string name="a11y_hearts">Te quedan %1$d de 3 corazones</string>
     <string name="daily_same_for_everyone_short">El mismo tablero para todos</string>
+    <plurals name="hints_used">
+        <item quantity="one">%1$d pista usada</item>
+        <item quantity="many">%1$d pistas usadas</item>
+        <item quantity="other">%1$d pistas usadas</item>
+    </plurals>
+    <string name="no_hearts_lost">Sin corazones perdidos</string>
 </resources>

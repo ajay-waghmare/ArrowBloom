@@ -44,7 +44,7 @@
     </plurals>
     <string name="bloom_cleared">Blüte gelöst!</string>
     <string name="daily_cleared">Tägliche Blüte gelöst!</string>
-    <string name="perfect_clear">Perfekt — kein einziges Herz verloren</string>
+    <string name="perfect_clear">Perfekt — kein Herz verloren, kein Tipp</string>
     <plurals name="blocked_taps">
         <item quantity="one">%1$d Herz verloren</item>
         <item quantity="other">%1$d Herzen verloren</item>
@@ -54,13 +54,13 @@
     <string name="coach_blocked">Blockiert! Das kostet ein Herz. Räume zuerst, was davor liegt</string>
     <string name="coach_keep_going">Gut. Weiter so — die Reihenfolge zählt</string>
     <string name="a11y_board">Brett %1$d mal %2$d, noch %3$d Pfeile</string>
-    <string name="a11y_stars">%1$d von 3 Sternen</string>
+    <string name="a11y_stars">%1$d von 5 Sternen</string>
     <string name="htp_1_title">Antippen, hinausgleiten</string>
     <string name="htp_1_text">Tippe einen Pfeil an und er gleitet auf seiner eigenen Linie in Pfeilrichtung hinaus — wenn vor der Spitze nichts im Weg ist.</string>
     <string name="htp_2_title">Die Reihenfolge zählt</string>
     <string name="htp_2_text">Ein blockierter Pfeil prallt zurück und kostet ein Herz. Du hast drei pro Brett. Räume zuerst, was vor ihm liegt.</string>
     <string name="htp_3_title">Blühen</string>
-    <string name="htp_3_text">Behalte alle drei Herzen für drei Sterne. Festgefahren? Ein Tipp hebt einen Pfeil hervor, der jetzt hinaus kann. Die #-Taste zeigt das Raster.</string>
+    <string name="htp_3_text">Löse ein Brett ohne verlorenes Herz und ohne Tipp für fünf Sterne. Jedes verlorene Herz und jeder Tipp kostet einen Stern. Die #-Taste zeigt das Raster.</string>
     <string name="got_it">Verstanden</string>
     <string name="settings">Einstellungen</string>
     <string name="back">Zurück</string>
@@ -86,4 +86,9 @@
     <string name="try_again">Nochmal versuchen</string>
     <string name="a11y_hearts">Noch %1$d von 3 Herzen</string>
     <string name="daily_same_for_everyone_short">Für alle dasselbe Brett</string>
+    <plurals name="hints_used">
+        <item quantity="one">%1$d Tipp genutzt</item>
+        <item quantity="other">%1$d Tipps genutzt</item>
+    </plurals>
+    <string name="no_hearts_lost">Kein Herz verloren</string>
 </resources>
