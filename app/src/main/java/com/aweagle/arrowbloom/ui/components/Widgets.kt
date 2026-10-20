@@ -26,6 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
@@ -39,21 +40,26 @@ import com.aweagle.arrowbloom.R
 import com.aweagle.arrowbloom.ui.Button
 import com.aweagle.arrowbloom.ui.IconButton
 import com.aweagle.arrowbloom.ui.pressable
-import com.aweagle.arrowbloom.ui.theme.ArrowGold
-import com.aweagle.arrowbloom.ui.theme.BgDark
+import com.aweagle.arrowbloom.ui.theme.OnAccent
+import com.aweagle.arrowbloom.ui.theme.StarEmpty
+import com.aweagle.arrowbloom.ui.theme.StarGold
 import com.aweagle.arrowbloom.ui.theme.SurfaceBorder
 import com.aweagle.arrowbloom.ui.theme.SurfaceCard
+import com.aweagle.arrowbloom.ui.theme.SurfaceSoft
 import com.aweagle.arrowbloom.ui.theme.TextMuted
 import com.aweagle.arrowbloom.ui.theme.TextPrimary
 import com.aweagle.arrowbloom.ui.theme.TextSecondary
 
-/** A bordered card on the dark background. */
+/** A white card with a hairline border and a soft shadow. */
 @Composable
 fun SectionCard(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
     Surface(
         shape = RoundedCornerShape(22.dp),
-        color = SurfaceCard.copy(alpha = 0.9f),
-        modifier = modifier.fillMaxWidth().border(1.dp, SurfaceBorder, RoundedCornerShape(22.dp)),
+        color = SurfaceCard,
+        modifier = modifier
+            .fillMaxWidth()
+            .shadow(4.dp, RoundedCornerShape(22.dp), ambientColor = Color(0x331D2A4D), spotColor = Color(0x331D2A4D))
+            .border(1.dp, SurfaceBorder, RoundedCornerShape(22.dp)),
     ) {
         Column(Modifier.padding(18.dp), content = content)
     }
@@ -72,11 +78,11 @@ fun ScreenHeader(title: String, onBack: () -> Unit) {
 
 /** Three stars, [stars] of them lit, read by TalkBack as one phrase. */
 @Composable
-fun StarsRow(stars: Int, modifier: Modifier = Modifier, size: Dp = 20.dp, dimUnlit: Color = Color(0x33FFFFFF)) {
+fun StarsRow(stars: Int, modifier: Modifier = Modifier, size: Dp = 20.dp, dimUnlit: Color = StarEmpty) {
     val desc = stringResource(R.string.a11y_stars, stars)
     Row(modifier.clearAndSetSemantics { contentDescription = desc }, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
         repeat(3) { i ->
-            Icon(Icons.Filled.Star, contentDescription = null, tint = if (i < stars) ArrowGold else dimUnlit, modifier = Modifier.size(size))
+            Icon(Icons.Filled.Star, contentDescription = null, tint = if (i < stars) StarGold else dimUnlit, modifier = Modifier.size(size))
         }
     }
 }
@@ -86,7 +92,7 @@ fun StarsRow(stars: Int, modifier: Modifier = Modifier, size: Dp = 20.dp, dimUnl
 fun StatTile(value: String, label: String, accent: Color, modifier: Modifier = Modifier) {
     Surface(
         shape = RoundedCornerShape(16.dp),
-        color = SurfaceCard.copy(alpha = 0.7f),
+        color = SurfaceCard,
         modifier = modifier.border(1.dp, SurfaceBorder, RoundedCornerShape(16.dp)),
     ) {
         Column(Modifier.padding(vertical = 12.dp, horizontal = 8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -104,7 +110,7 @@ fun PrimaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifi
         onClick = onClick,
         modifier = modifier.fillMaxWidth().height(54.dp),
         shape = RoundedCornerShape(18.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = container, contentColor = BgDark),
+        colors = ButtonDefaults.buttonColors(containerColor = container, contentColor = OnAccent),
     ) {
         if (leading != null) {
             Icon(leading, contentDescription = null, modifier = Modifier.size(22.dp))
@@ -121,7 +127,7 @@ fun SoftButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier)
         onClick = onClick,
         modifier = modifier.fillMaxWidth().height(50.dp),
         shape = RoundedCornerShape(18.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = Color(0x22FFFFFF), contentColor = TextPrimary),
+        colors = ButtonDefaults.buttonColors(containerColor = SurfaceSoft, contentColor = TextPrimary),
     ) {
         Text(text, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
     }
@@ -131,8 +137,8 @@ fun SoftButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier)
 fun ToggleRow(icon: ImageVector, label: String, checked: Boolean, onToggle: () -> Unit) {
     Surface(
         shape = RoundedCornerShape(16.dp),
-        color = SurfaceCard.copy(alpha = 0.8f),
-        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp).pressable(onClick = onToggle),
+        color = SurfaceCard,
+        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp).border(1.dp, SurfaceBorder, RoundedCornerShape(16.dp)).pressable(onClick = onToggle),
     ) {
         Row(Modifier.padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp))
@@ -141,7 +147,7 @@ fun ToggleRow(icon: ImageVector, label: String, checked: Boolean, onToggle: () -
             Switch(
                 checked = checked,
                 onCheckedChange = { onToggle() },
-                colors = SwitchDefaults.colors(checkedTrackColor = MaterialTheme.colorScheme.primary, checkedThumbColor = BgDark),
+                colors = SwitchDefaults.colors(checkedTrackColor = MaterialTheme.colorScheme.primary, checkedThumbColor = OnAccent),
             )
         }
     }
@@ -151,8 +157,8 @@ fun ToggleRow(icon: ImageVector, label: String, checked: Boolean, onToggle: () -
 fun ActionRow(icon: ImageVector, label: String, onClick: () -> Unit) {
     Surface(
         shape = RoundedCornerShape(16.dp),
-        color = SurfaceCard.copy(alpha = 0.8f),
-        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp).pressable(onClick = onClick),
+        color = SurfaceCard,
+        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp).border(1.dp, SurfaceBorder, RoundedCornerShape(16.dp)).pressable(onClick = onClick),
     ) {
         Row(Modifier.padding(horizontal = 16.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp))

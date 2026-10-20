@@ -2,157 +2,93 @@ package com.aweagle.arrowbloom.engine
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
-import org.junit.Before
 import org.junit.Test
 
 class GameEngineTest {
 
-    private lateinit var engine: GameEngine
-
-    @Before
-    fun setUp() {
-        // a1 (0,0) UP escapes · a2 (2,2) RIGHT escapes · a3 (2,1) RIGHT is blocked by a2.
-        val a1 = Arrow(1, GridPos(0, 0), Direction.UP, colorIndex = 0)
-        val a2 = Arrow(2, GridPos(2, 2), Direction.RIGHT, colorIndex = 1)
-        val a3 = Arrow(3, GridPos(2, 1), Direction.RIGHT, colorIndex = 0)
-        engine = GameEngine(Board(4, 4, mapOf(1 to a1, 2 to a2, 3 to a3)), levelNumber = 1)
+    // A waits on B; C is free and nobody waits on it.
+    private fun engine(withC: Boolean = false): GameEngine {
+        val a = line(1, Direction.RIGHT, 2 to 1, 2 to 0)
+        val b = line(2, Direction.UP, 1 to 3, 2 to 3, 3 to 3)
+        val c = line(3, Direction.RIGHT, 4 to 4, 4 to 3)
+        val board = if (withC) boardOf(5, 5, a, b, c) else boardOf(5, 5, a, b)
+        return GameEngine(board, levelNumber = 7)
     }
 
-    @Test fun tapEmptyCell_changesNothing() {
-        assertEquals(TapResult.EmptyCell, engine.onCellTapped(GridPos(3, 3)))
-        assertEquals(0, engine.score)
-        assertEquals(0, engine.combo)
-        assertEquals(0, engine.movesCount)
+    @Test fun emptyCell_isNothing() {
+        assertEquals(TapResult.EmptyCell, engine().onCellTapped(GridPos(0, 0)))
     }
 
-    @Test fun escape_scoresAndStartsCombo() {
-        val r = engine.onArrowTapped(1) as TapResult.Escaped
-        assertEquals(10, r.scoreDelta)
-        assertEquals(1, r.combo)
-        assertEquals(1, r.colorStreak)
-        assertFalse(r.isLevelCompleted)
-        assertEquals(10, engine.score)
-        assertEquals(2, engine.remainingArrowsCount)
-        assertEquals(listOf(1), engine.escapeOrder)
-        assertTrue(engine.canUndo)
+    @Test fun freeArrow_escapes_andBuildsCombo() {
+        val e = engine()
+        val r1 = e.onArrowTapped(2) as TapResult.Escaped
+        assertEquals(1, r1.combo)
+        assertEquals(10, r1.scoreDelta)
+        val r2 = e.onCellTapped(GridPos(2, 0)) as TapResult.Escaped
+        assertEquals(2, r2.combo)
+        assertEquals(20, r2.scoreDelta)
+        assertTrue(r2.isLevelCompleted)
+        assertEquals(30, e.score)
+        assertEquals(3, e.starsSoFar)
+        assertEquals(TapResult.Ignored, e.onArrowTapped(1))
     }
 
-    @Test fun consecutiveEscapes_differentColours_buildTheCombo() {
-        engine.onArrowTapped(1)
-        val r = engine.onArrowTapped(2) as TapResult.Escaped
-        assertEquals(20, r.scoreDelta)
-        assertEquals(2, r.combo)
-        assertEquals(1, r.colorStreak)      // colour changed, no bonus
-        assertEquals(30, engine.score)
-    }
-
-    @Test fun sameColourTwice_earnsTheColourBonus() {
-        val b1 = Arrow(1, GridPos(0, 0), Direction.UP, colorIndex = 2)
-        val b2 = Arrow(2, GridPos(0, 3), Direction.UP, colorIndex = 2)
-        val e = GameEngine(Board(4, 4, mapOf(1 to b1, 2 to b2)), 1)
-        e.onArrowTapped(1)
-        val r = e.onArrowTapped(2) as TapResult.Escaped
-        assertEquals(2, r.colorStreak)
-        assertEquals(Scoring.pointsFor(2, 2), r.scoreDelta)
-        assertEquals(25, r.scoreDelta)
-        assertTrue(r.isLevelCompleted)
-    }
-
-    @Test fun blockedTap_resetsCombo_countsAgainstStars_andIsTransient() {
-        engine.onArrowTapped(1)
-        val r = engine.onArrowTapped(3) as TapResult.Blocked
+    @Test fun wrongTap_costsAHeart_resetsCombo_andReportsTheSlide() {
+        val e = engine(withC = true)
+        e.onArrowTapped(3)
+        assertEquals(1, e.combo)
+        val r = e.onArrowTapped(1) as TapResult.Blocked
         assertEquals(2, r.blockerId)
-        assertEquals(0, engine.combo)
-        assertEquals(10, engine.score)
-        assertEquals(1, engine.blockedTaps)
-        assertEquals(2, engine.starsSoFar)
-        assertEquals(ArrowState.BLOCKED, engine.board.getArrowById(3)?.state)
-        engine.resetBlockedState(3)
-        assertEquals(ArrowState.IDLE, engine.board.getArrowById(3)?.state)
+        assertEquals(1, r.freeSteps)
+        assertEquals(2, r.heartsLeft)
+        assertFalse(r.isFailed)
+        assertEquals(0, e.combo)
+        assertEquals(ArrowState.BLOCKED, e.board.getArrowById(1)?.state)
+        e.resetBlockedState(1)
+        assertEquals(ArrowState.IDLE, e.board.getArrowById(1)?.state)
+        assertEquals(2, e.starsSoFar)
     }
 
-    @Test fun threeBlockedTaps_leaveOneStar() {
-        repeat(3) { engine.onArrowTapped(3); engine.resetBlockedState(3) }
-        assertEquals(1, engine.starsSoFar)
+    @Test fun threeWrongTaps_loseTheBoard() {
+        val e = engine()
+        e.onArrowTapped(1)
+        e.onArrowTapped(1)
+        val last = e.onArrowTapped(1) as TapResult.Blocked
+        assertTrue(last.isFailed)
+        assertEquals(0, last.heartsLeft)
+        assertTrue(e.isFailed)
+        assertEquals(0, e.starsSoFar)
+        assertEquals(TapResult.Ignored, e.onArrowTapped(2))
     }
 
-    @Test fun undo_restoresBoardScoreComboAndOrder() {
-        engine.onArrowTapped(1)
-        engine.onArrowTapped(2)
-        assertTrue(engine.undo())
-        assertEquals(10, engine.score)
-        assertEquals(1, engine.combo)
-        assertEquals(listOf(1), engine.escapeOrder)
-        assertNotNull(engine.board.getArrowAt(GridPos(2, 2)))
-        assertTrue(engine.undo())
-        assertFalse(engine.undo())
-        assertFalse(engine.canUndo)
-        assertEquals(0, engine.score)
+    @Test fun hint_picksTheArrowOthersWaitFor() {
+        val e = engine(withC = true)
+        assertEquals(2, e.getHintArrowId())
+        e.onArrowTapped(2)
+        val next = e.getHintArrowId()
+        assertTrue(next == 1 || next == 3)
     }
 
-    @Test fun undo_doesNotForgiveABlockedTap() {
-        engine.onArrowTapped(3)
-        engine.onArrowTapped(1)
-        engine.undo()
-        assertEquals(1, engine.blockedTaps)
-        assertEquals(listOf(GameEngine.BLOCKED_MARK), engine.escapeOrder)
+    @Test fun restore_replaysEscapesAndLostHearts() {
+        val original = engine(withC = true)
+        original.onArrowTapped(1)          // wrong
+        original.onArrowTapped(3)
+        original.onArrowTapped(2)
+        val order = original.escapeOrder.toList()
+        assertEquals(listOf(GameEngine.BLOCKED_MARK, 3, 2), order)
+
+        val restored = engine(withC = true)
+        assertEquals(2, restored.restore(order, blockedTapsBefore = 0))
+        assertEquals(original.score, restored.score)
+        assertEquals(original.combo, restored.combo)
+        assertEquals(2, restored.heartsLeft)
+        assertEquals(1, restored.remainingArrowsCount)
     }
 
-    @Test fun hint_isAlwaysAnEscapableArrow() {
-        val id = engine.getHintArrowId()
-        assertNotNull(id)
-        assertTrue(CollisionDetector.canArrowEscape(engine.board.getArrowById(id!!)!!, engine.board))
-    }
-
-    @Test fun clearingEverything_completesTheBoard_atPar() {
-        assertEquals(3, engine.par)
-        engine.onArrowTapped(1)
-        engine.onArrowTapped(2)
-        val r = engine.onArrowTapped(3) as TapResult.Escaped
-        assertTrue(r.isLevelCompleted)
-        assertTrue(engine.isLevelCompleted)
-        assertEquals(3, engine.starsSoFar)
-        assertEquals(engine.par, engine.movesCount)
-    }
-
-    @Test fun tappingAnEscapedArrow_isIgnored() {
-        engine.onArrowTapped(1)
-        assertEquals(TapResult.AlreadyEscaped, engine.onArrowTapped(1))
-        assertNull(engine.board.getArrowAt(GridPos(0, 0)))
-    }
-
-    @Test fun restore_replaysASavedRun() {
-        engine.onArrowTapped(1)
-        engine.onArrowTapped(3)      // blocked
-        engine.resetBlockedState(3)
-        engine.onArrowTapped(2)
-        val order = engine.escapeOrder.toList()
-        assertEquals(listOf(1, GameEngine.BLOCKED_MARK, 2), order)
-        val blocked = engine.blockedTaps
-
-        val fresh = GameEngine(engine.boardAtStart(), 1)
-        assertEquals(2, fresh.restore(order, blocked))
-        assertEquals(engine.score, fresh.score)
-        assertEquals(engine.combo, fresh.combo)
-        assertEquals(1, fresh.remainingArrowsCount)
-        assertEquals(blocked, fresh.blockedTaps)
-        assertEquals(2, fresh.starsSoFar)
-    }
-
-    @Test fun restore_stopsAtAnImpossibleStep() {
-        val fresh = GameEngine(engine.boardAtStart(), 1)
-        // 3 cannot escape before 2: a corrupt save must not crash or cheat.
-        assertEquals(0, fresh.restore(listOf(3, 2), 0))
-        assertEquals(3, fresh.remainingArrowsCount)
-    }
-
-    private fun GameEngine.boardAtStart(): Board {
-        val a1 = Arrow(1, GridPos(0, 0), Direction.UP, colorIndex = 0)
-        val a2 = Arrow(2, GridPos(2, 2), Direction.RIGHT, colorIndex = 1)
-        val a3 = Arrow(3, GridPos(2, 1), Direction.RIGHT, colorIndex = 0)
-        return Board(4, 4, mapOf(1 to a1, 2 to a2, 3 to a3))
+    @Test fun restore_stopsAtAnImpossibleEscape() {
+        val e = engine()
+        assertEquals(0, e.restore(listOf(1, 2), blockedTapsBefore = 0))
+        assertEquals(2, e.remainingArrowsCount)
     }
 }

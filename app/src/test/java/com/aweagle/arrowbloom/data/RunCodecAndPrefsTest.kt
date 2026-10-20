@@ -20,9 +20,15 @@ class RunCodecAndPrefsTest {
         assertNull(RunCodec.decode(null))
         assertNull(RunCodec.decode(""))
         assertNull(RunCodec.decode("v9|LEVEL|1|0||0|0"))
-        assertNull(RunCodec.decode("v1|LEVEL|x|0||0|0"))
-        assertNull(RunCodec.decode("v1|NOPE|1|0||0|0"))
-        assertNull(RunCodec.decode("v1|LEVEL|1|0|1,2"))
+        assertNull(RunCodec.decode("v2|LEVEL|x|0||0|0"))
+        assertNull(RunCodec.decode("v2|NOPE|1|0||0|0"))
+        assertNull(RunCodec.decode("v2|LEVEL|1|0|1,2"))
+    }
+
+    @Test fun saveFromAnOlderGenerator_isDropped() {
+        // A build 1 save names arrows of a board that build 2 no longer generates.
+        assertNull(RunCodec.decode("v1|LEVEL|3|0|2,5,1|0|0"))
+        assertTrue(RunCodec.encode(SavedRun(RunMode.LEVEL, 3, 0L, listOf(1), 0, 0)).startsWith("v2|"))
     }
 
     @Test fun prefs_defaults_andStarsRecording() {

@@ -1,7 +1,7 @@
 package com.aweagle.arrowbloom.ui.screens
 
 import android.content.Intent
-import android.net.Uri
+import androidx.core.net.toUri
 import android.os.Build
 import android.provider.Settings as SystemSettings
 import android.widget.Toast
@@ -76,7 +76,7 @@ fun SettingsScreen(state: GameUiState, vm: GameViewModel) {
                         vm.feedback.tap()
                         runCatching {
                             context.startActivity(
-                                Intent(SystemSettings.ACTION_APP_LOCALE_SETTINGS, Uri.parse("package:${context.packageName}"))
+                                Intent(SystemSettings.ACTION_APP_LOCALE_SETTINGS, "package:${context.packageName}".toUri())
                                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
                             )
                         }.onFailure { Toast.makeText(context, R.string.could_not_open_link, Toast.LENGTH_SHORT).show() }
@@ -85,17 +85,17 @@ fun SettingsScreen(state: GameUiState, vm: GameViewModel) {
                 ActionRow(Icons.Filled.StarRate, stringResource(R.string.rate_app)) {
                     vm.feedback.tap()
                     val opened = runCatching {
-                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=${context.packageName.removeSuffix(".debug")}")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                        context.startActivity(Intent(Intent.ACTION_VIEW, "market://details?id=${context.packageName.removeSuffix(".debug")}".toUri()).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
                         true
                     }.getOrDefault(false)
                     if (!opened) runCatching {
-                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(BuildConfig.STORE_URL)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                        context.startActivity(Intent(Intent.ACTION_VIEW, BuildConfig.STORE_URL.toUri()).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
                     }.onFailure { Toast.makeText(context, R.string.could_not_open_link, Toast.LENGTH_SHORT).show() }
                 }
                 ActionRow(Icons.Filled.PrivacyTip, stringResource(R.string.privacy_policy)) {
                     vm.feedback.tap()
                     runCatching {
-                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(BuildConfig.PRIVACY_POLICY_URL)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                        context.startActivity(Intent(Intent.ACTION_VIEW, BuildConfig.PRIVACY_POLICY_URL.toUri()).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
                     }.onFailure { Toast.makeText(context, R.string.could_not_open_link, Toast.LENGTH_SHORT).show() }
                 }
 

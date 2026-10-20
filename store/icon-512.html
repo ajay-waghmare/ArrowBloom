@@ -1,29 +1,23 @@
 <!doctype html>
 <html><head><meta charset="utf-8"><title>Arrow Bloom icon</title>
-<style>html,body{margin:0;background:#161B22;width:512px;height:512px;overflow:hidden}</style></head>
+<style>html,body{margin:0;background:#EEF7F0;width:512px;height:512px;overflow:hidden}</style></head>
 <body>
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 108 108">
+<!-- Same drawing as the adaptive launcher icon (res/drawable/ic_launcher_foreground.xml), cropped to its safe zone. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="19 19 70 70">
   <defs>
-    <radialGradient id="bg" cx="50%" cy="45%" r="70%">
-      <stop offset="0%" stop-color="#1D2744"/><stop offset="100%" stop-color="#0C101D"/>
-    </radialGradient>
-    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#00E5FF" stop-opacity="0.35"/><stop offset="100%" stop-color="#00E5FF" stop-opacity="0"/>
-    </radialGradient>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#E3F3E7"/><stop offset="100%" stop-color="#FBFDFB"/>
+    </linearGradient>
   </defs>
-  <rect width="108" height="108" fill="url(#bg)"/>
-  <circle cx="54" cy="54" r="40" fill="url(#glow)"/>
-  <!-- petals behind the arrows -->
-  <g opacity="0.28" fill="#FF8FB1">
-    <ellipse cx="54" cy="31" rx="7" ry="13"/><ellipse cx="77" cy="54" rx="13" ry="7"/>
-    <ellipse cx="54" cy="77" rx="7" ry="13"/><ellipse cx="31" cy="54" rx="13" ry="7"/>
-    <g transform="rotate(45 54 54)"><ellipse cx="54" cy="31" rx="7" ry="13"/><ellipse cx="77" cy="54" rx="13" ry="7"/><ellipse cx="54" cy="77" rx="7" ry="13"/><ellipse cx="31" cy="54" rx="13" ry="7"/></g>
+  <rect x="0" y="0" width="108" height="108" fill="url(#bg)"/>
+  <g fill="#C0C7D6">
+    <circle cx="34" cy="38" r="2.3"/><circle cx="46" cy="38" r="2.3"/><circle cx="58" cy="38" r="2.3"/>
+    <circle cx="46" cy="62" r="2.3"/><circle cx="58" cy="62" r="2.3"/>
   </g>
-  <!-- four arrows pointing out -->
-  <path fill="#00E5FF" stroke="#FFFFFF" stroke-opacity="0.85" stroke-width="1.2" d="M54,24 L65,38 L58,38 L58,49 L50,49 L50,38 L43,38 Z"/>
-  <path fill="#FFB800" stroke="#FFFFFF" stroke-opacity="0.85" stroke-width="1.2" d="M84,54 L70,65 L70,58 L59,58 L59,50 L70,50 L70,43 Z"/>
-  <path fill="#FF2A7A" stroke="#FFFFFF" stroke-opacity="0.85" stroke-width="1.2" d="M54,84 L43,70 L50,70 L50,59 L58,59 L58,70 L65,70 Z"/>
-  <path fill="#00E676" stroke="#FFFFFF" stroke-opacity="0.85" stroke-width="1.2" d="M24,54 L38,43 L38,50 L49,50 L49,58 L38,58 L38,65 Z"/>
-  <path fill="#FFFFFF" d="M54,48.5 L59.5,54 L54,59.5 L48.5,54 Z"/>
+  <path d="M44,74 L70,74 L70,38" fill="none" stroke="#23A05A" stroke-opacity="0.22" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M34,76 L34,50 L58,50" fill="none" stroke="#1D2A4D" stroke-width="4.4" stroke-linejoin="miter"/>
+  <path d="M64,50 L57,44.6 L57,55.4 Z" fill="#1D2A4D"/>
+  <path d="M44,74 L70,74 L70,38" fill="none" stroke="#237A4B" stroke-width="4.4" stroke-linejoin="miter"/>
+  <path d="M70,32 L64.6,39 L75.4,39 Z" fill="#237A4B"/>
 </svg>
 </body></html>

@@ -1,30 +1,35 @@
 package com.aweagle.arrowbloom.engine
 
-data class MoveRecord(
-    val arrowId: Int,
-    val previousState: ArrowState,
-    val scoreEarned: Int,
-    val previousCombo: Int,
-    val previousColorStreak: Int,
-    val previousLastColor: Int,
-)
-
 sealed class TapResult {
     data class Escaped(
         val arrow: Arrow,
         val scoreDelta: Int,
         val combo: Int,
-        val colorStreak: Int,
         val isLevelCompleted: Boolean,
     ) : TapResult()
-    data class Blocked(val arrow: Arrow, val blockerId: Int) : TapResult()
+
+    /**
+     * The arrow slid [freeSteps] cells, bumped into [blockerId] and came back.
+     * [isFailed] is true when that was the last heart.
+     */
+    data class Blocked(
+        val arrow: Arrow,
+        val blockerId: Int,
+        val freeSteps: Int,
+        val heartsLeft: Int,
+        val isFailed: Boolean,
+    ) : TapResult()
+
     data object EmptyCell : TapResult()
     data object AlreadyEscaped : TapResult()
+
+    /** The board is over (cleared or out of hearts); taps are ignored. */
+    data object Ignored : TapResult()
 }
 
 /**
- * One run of one board: taps, score, combo, colour streak, blocked-tap count (the star
- * rule), undo history and hints. Pure Kotlin; the view model owns the animations.
+ * One run of one board: taps, hearts, score, combo and hints. Pure Kotlin; the view model
+ * owns the animations.
  */
 class GameEngine(
     initialBoard: Board,
@@ -36,31 +41,25 @@ class GameEngine(
         private set
     var combo: Int = 0
         private set
-    var colorStreak: Int = 0
-        private set
     var movesCount: Int = 0
         private set
     var blockedTaps: Int = 0
         private set
 
-    private var lastColor: Int = -1
-    private val undoStack = ArrayList<MoveRecord>()
     private val history = ArrayList<Int>()
 
     /**
-     * The run so far: escaped arrow ids in order, with [BLOCKED_MARK] where a blocked tap
-     * happened. Replaying it rebuilds the exact score, combo and star count after a process death.
+     * The run so far: escaped arrow ids in order, with [BLOCKED_MARK] where a wrong tap
+     * happened. Replaying it rebuilds the exact hearts, score and combo after a process death.
      */
     val escapeOrder: List<Int> get() = history
 
     val isLevelCompleted: Boolean get() = board.isCompleted
+    val heartsLeft: Int get() = Scoring.heartsLeft(blockedTaps)
+    val isFailed: Boolean get() = heartsLeft == 0 && !board.isCompleted
     val remainingArrowsCount: Int get() = board.activeArrows.size
     val totalArrowsCount: Int get() = board.totalArrows
-
-    /** Every arrow needs one tap, so par is the arrow count. */
-    val par: Int get() = board.totalArrows
     val starsSoFar: Int get() = Scoring.starsFor(blockedTaps)
-    val canUndo: Boolean get() = undoStack.isNotEmpty()
 
     fun onCellTapped(pos: GridPos): TapResult {
         val arrow = board.getArrowAt(pos) ?: return TapResult.EmptyCell
@@ -68,6 +67,7 @@ class GameEngine(
     }
 
     fun onArrowTapped(arrowId: Int): TapResult {
+        if (isFailed || isLevelCompleted) return TapResult.Ignored
         val arrow = board.getArrowById(arrowId) ?: return TapResult.EmptyCell
         if (arrow.state == ArrowState.ESCAPED) return TapResult.AlreadyEscaped
         movesCount++
@@ -75,56 +75,47 @@ class GameEngine(
             is EscapeResult.CanEscape -> escape(arrow)
             is EscapeResult.Blocked -> {
                 combo = 0
-                colorStreak = 0
-                lastColor = -1
                 blockedTaps++
                 history.add(BLOCKED_MARK)
                 board = board.withArrowState(arrow.id, ArrowState.BLOCKED)
-                TapResult.Blocked(arrow, check.blockerId)
+                TapResult.Blocked(arrow, check.blockerId, check.freeSteps, heartsLeft, isFailed)
             }
         }
     }
 
     private fun escape(arrow: Arrow): TapResult.Escaped {
-        val previousCombo = combo
-        val previousStreak = colorStreak
-        val previousLast = lastColor
         combo++
-        colorStreak = if (arrow.colorIndex == lastColor) colorStreak + 1 else 1
-        lastColor = arrow.colorIndex
-        val points = Scoring.pointsFor(combo, colorStreak)
+        val points = Scoring.pointsFor(combo)
         score += points
-        undoStack.add(MoveRecord(arrow.id, arrow.state, points, previousCombo, previousStreak, previousLast))
         history.add(arrow.id)
         board = board.removeArrow(arrow.id)
-        return TapResult.Escaped(arrow, points, combo, colorStreak, board.isCompleted)
+        return TapResult.Escaped(arrow, points, combo, board.isCompleted)
     }
 
-    /** Blocked is a transient visual state; the view model clears it after the shake. */
+    /** Blocked is a transient visual state; the view model clears it after the bump. */
     fun resetBlockedState(arrowId: Int) {
         val arrow = board.getArrowById(arrowId) ?: return
         if (arrow.state == ArrowState.BLOCKED) board = board.withArrowState(arrowId, ArrowState.IDLE)
     }
 
-    /** Takes back the last escape. Blocked taps are not undone: they are the star rule. */
-    fun undo(): Boolean {
-        val last = undoStack.removeLastOrNull() ?: return false
-        val arrow = board.getArrowById(last.arrowId) ?: return false
-        board = board.withArrow(arrow.withState(last.previousState))
-        score = (score - last.scoreEarned).coerceAtLeast(0)
-        combo = last.previousCombo
-        colorStreak = last.previousColorStreak
-        lastColor = last.previousLastColor
-        val idx = history.lastIndexOf(last.arrowId)
-        if (idx >= 0) history.removeAt(idx)
-        return true
+    /**
+     * A free arrow to suggest: the one standing in front of the most other arrows, so the
+     * hint opens the board up instead of picking an edge arrow nobody waits for.
+     */
+    fun getHintArrowId(): Int? {
+        val free = CollisionDetector.findEscapableArrows(board)
+        if (free.isEmpty()) return null
+        val waiting = HashMap<Int, Int>()
+        for (a in board.activeArrows) {
+            val r = CollisionDetector.checkEscape(a, board)
+            if (r is EscapeResult.Blocked && r.blockerId != a.id) waiting[r.blockerId] = (waiting[r.blockerId] ?: 0) + 1
+        }
+        return free.maxWithOrNull(compareBy<Arrow>({ waiting[it.id] ?: 0 }, { it.body.size }, { -it.id }))?.id
     }
-
-    fun getHintArrowId(): Int? = CollisionDetector.findEscapableArrows(board).firstOrNull()?.id
 
     /**
      * Rebuilds a saved run by replaying [order]: escapes in sequence and [BLOCKED_MARK]s as
-     * combo resets. Stops at the first id that cannot escape, which only happens with a
+     * lost hearts. Stops at the first id that cannot escape, which only happens with a
      * corrupt save. [blockedTapsBefore] is a floor for saves written without marks.
      * Returns how many escapes were applied.
      */
@@ -134,8 +125,6 @@ class GameEngine(
         for (id in order) {
             if (id == BLOCKED_MARK) {
                 combo = 0
-                colorStreak = 0
-                lastColor = -1
                 blocked++
                 history.add(BLOCKED_MARK)
                 continue
@@ -152,7 +141,7 @@ class GameEngine(
     }
 
     companion object {
-        /** Sentinel in [escapeOrder] for a blocked tap. Arrow ids start at 1. */
+        /** Sentinel in [escapeOrder] for a wrong tap. Arrow ids start at 1. */
         const val BLOCKED_MARK = -1
     }
 }

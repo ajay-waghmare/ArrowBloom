@@ -42,20 +42,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.Shadow
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.aweagle.arrowbloom.BuildConfig
 import com.aweagle.arrowbloom.R
+import com.aweagle.arrowbloom.daily.DailyBloom
 import com.aweagle.arrowbloom.data.RunMode
+import com.aweagle.arrowbloom.engine.Direction
 import com.aweagle.arrowbloom.ui.GameUiState
 import com.aweagle.arrowbloom.ui.GameViewModel
 import com.aweagle.arrowbloom.ui.IconButton
@@ -66,22 +63,25 @@ import com.aweagle.arrowbloom.ui.components.SectionCard
 import com.aweagle.arrowbloom.ui.components.SoftButton
 import com.aweagle.arrowbloom.ui.components.StarsRow
 import com.aweagle.arrowbloom.ui.components.StatTile
+import com.aweagle.arrowbloom.ui.components.drawLineArrow
 import com.aweagle.arrowbloom.ui.shareText
-import com.aweagle.arrowbloom.ui.theme.AccentCombo
-import com.aweagle.arrowbloom.ui.theme.ArrowBlossom
-import com.aweagle.arrowbloom.ui.theme.ArrowGold
-import com.aweagle.arrowbloom.ui.theme.SurfaceCard
+import com.aweagle.arrowbloom.ui.theme.DotColor
+import com.aweagle.arrowbloom.ui.theme.GoldText
+import com.aweagle.arrowbloom.ui.theme.Ink
+import com.aweagle.arrowbloom.ui.theme.Palettes
+import com.aweagle.arrowbloom.ui.theme.StarGold
+import com.aweagle.arrowbloom.ui.theme.SurfaceSoft
 import com.aweagle.arrowbloom.ui.theme.TextPrimary
 import com.aweagle.arrowbloom.ui.theme.TextSecondary
-import com.aweagle.arrowbloom.daily.DailyBloom
-import com.aweagle.arrowbloom.BuildConfig
 
 @Composable
 fun HomeScreen(state: GameUiState, vm: GameViewModel) {
     val context = LocalContext.current
     val res = context.resources
     var showHowTo by remember { mutableStateOf(false) }
-    val titleSize = with(LocalDensity.current) { 40.dp.toSp() }
+    val titleSize = with(LocalDensity.current) { 38.dp.toSp() }
+    val accent = state.palette.accent
+    val dailyAccent = Palettes.DAILY.accent
 
     Box(Modifier.fillMaxSize()) {
         Column(
@@ -96,32 +96,26 @@ fun HomeScreen(state: GameUiState, vm: GameViewModel) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Spacer(Modifier.weight(1f))
                 IconButton(onClick = { vm.feedback.tap(); vm.openSettings() }) {
-                    Icon(Icons.Filled.Settings, contentDescription = stringResource(R.string.settings), tint = TextSecondary)
+                    Icon(Icons.Filled.Settings, contentDescription = stringResource(R.string.settings), tint = accent)
                 }
             }
 
             // Logotype
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    stringResource(R.string.brand_arrow), color = TextPrimary, fontSize = titleSize, fontWeight = FontWeight.Black, letterSpacing = 2.sp,
-                    style = TextStyle(shadow = Shadow(Color.Black.copy(alpha = 0.5f), Offset(0f, 4f), 8f)),
-                )
+                Text(stringResource(R.string.brand_arrow), color = Ink, fontSize = titleSize, fontWeight = FontWeight.Black, letterSpacing = 2.sp)
                 Spacer(Modifier.width(8.dp))
-                Text(
-                    stringResource(R.string.brand_bloom), color = state.palette.accent, fontSize = titleSize, fontWeight = FontWeight.Black, letterSpacing = 2.sp,
-                    style = TextStyle(shadow = Shadow(state.palette.accent.copy(alpha = 0.45f), Offset(0f, 4f), 12f)),
-                )
+                Text(stringResource(R.string.brand_bloom), color = accent, fontSize = titleSize, fontWeight = FontWeight.Black, letterSpacing = 2.sp)
             }
             Text(stringResource(R.string.tagline), color = TextSecondary, style = MaterialTheme.typography.bodyMedium)
-            Spacer(Modifier.height(14.dp))
-            HeroArrows(state)
-            Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.height(12.dp))
+            HeroBoard(accent)
+            Spacer(Modifier.height(12.dp))
 
             // Journey
             SectionCard {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
-                        Text(stringResource(R.string.journey).uppercase(), color = state.palette.accent, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.5.sp)
+                        Text(stringResource(R.string.journey).uppercase(), color = accent, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.5.sp)
                         Spacer(Modifier.height(2.dp))
                         Text(stringResource(state.gardenNameRes), color = TextPrimary, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                         Text(
@@ -131,7 +125,7 @@ fun HomeScreen(state: GameUiState, vm: GameViewModel) {
                     }
                     if (state.gardenMaxStars > 0) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Filled.Star, contentDescription = null, tint = ArrowGold, modifier = Modifier.size(16.dp))
+                            Icon(Icons.Filled.Star, contentDescription = null, tint = StarGold, modifier = Modifier.size(16.dp))
                             Spacer(Modifier.width(4.dp))
                             Text(stringResource(R.string.stars_collected, state.gardenStars, state.gardenMaxStars), color = TextSecondary, fontSize = 12.sp)
                         }
@@ -142,8 +136,8 @@ fun HomeScreen(state: GameUiState, vm: GameViewModel) {
                     LinearProgressIndicator(
                         progress = { ((state.gardenPosition - 1).toFloat() / state.gardenSize).coerceIn(0f, 1f) },
                         modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)),
-                        color = state.palette.accent,
-                        trackColor = SurfaceCard,
+                        color = accent,
+                        trackColor = SurfaceSoft,
                     )
                 }
                 Spacer(Modifier.height(14.dp))
@@ -151,7 +145,7 @@ fun HomeScreen(state: GameUiState, vm: GameViewModel) {
                 PrimaryButton(
                     text = if (resumingLevel) stringResource(R.string.continue_run) else stringResource(R.string.play),
                     leading = Icons.Filled.PlayArrow,
-                    container = state.palette.accent,
+                    container = accent,
                     onClick = { vm.feedback.tap(); vm.playOrContinue() },
                 )
             }
@@ -162,7 +156,7 @@ fun HomeScreen(state: GameUiState, vm: GameViewModel) {
             SectionCard {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
-                        Text(stringResource(R.string.daily_bloom).uppercase(), color = ArrowBlossom, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.5.sp)
+                        Text(stringResource(R.string.daily_bloom).uppercase(), color = dailyAccent, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.5.sp)
                         Spacer(Modifier.height(2.dp))
                         Text(stringResource(R.string.daily_number, state.dailyNumber), color = TextPrimary, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                         Text(
@@ -178,11 +172,11 @@ fun HomeScreen(state: GameUiState, vm: GameViewModel) {
                 }
                 Spacer(Modifier.height(10.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Filled.LocalFireDepartment, contentDescription = null, tint = if (state.dailyStreak > 0) ArrowGold else TextSecondary, modifier = Modifier.size(18.dp))
+                    Icon(Icons.Filled.LocalFireDepartment, contentDescription = null, tint = if (state.dailyStreak > 0) StarGold else TextSecondary, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(6.dp))
                     Text(
                         if (state.dailyStreak > 0) res.getQuantityString(R.plurals.streak_days, state.dailyStreak, state.dailyStreak) else stringResource(R.string.streak_start),
-                        color = if (state.dailyStreak > 0) ArrowGold else TextSecondary, fontSize = 13.sp, fontWeight = FontWeight.Bold,
+                        color = if (state.dailyStreak > 0) GoldText else TextSecondary, fontSize = 13.sp, fontWeight = FontWeight.Bold,
                     )
                     if (state.bestStreak > 1) {
                         Spacer(Modifier.width(10.dp))
@@ -198,7 +192,7 @@ fun HomeScreen(state: GameUiState, vm: GameViewModel) {
                 if (state.dailyDoneToday) {
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         PrimaryButton(
-                            stringResource(R.string.share), leading = Icons.Filled.Share, container = ArrowBlossom, modifier = Modifier.weight(1f),
+                            stringResource(R.string.share), leading = Icons.Filled.Share, container = dailyAccent, modifier = Modifier.weight(1f),
                             onClick = {
                                 vm.onShared()
                                 shareText(context, DailyBloom.shareText(state.dailyNumber, state.dailyStarsToday, state.dailyArrows, state.dailyBlockedToday, BuildConfig.STORE_URL))
@@ -210,7 +204,7 @@ fun HomeScreen(state: GameUiState, vm: GameViewModel) {
                     PrimaryButton(
                         text = if (resumingDaily) stringResource(R.string.continue_run) else stringResource(R.string.daily_play),
                         leading = Icons.Filled.PlayArrow,
-                        container = ArrowBlossom,
+                        container = dailyAccent,
                         onClick = { vm.feedback.tap(); if (resumingDaily) vm.playOrContinue() else vm.startDaily() },
                     )
                 }
@@ -219,9 +213,9 @@ fun HomeScreen(state: GameUiState, vm: GameViewModel) {
             Spacer(Modifier.height(12.dp))
 
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                StatTile(state.levelsCleared.toString(), stringResource(R.string.stats_levels), state.palette.accent, Modifier.weight(1f))
-                StatTile(state.perfectClears.toString(), stringResource(R.string.stats_perfect), ArrowGold, Modifier.weight(1f))
-                StatTile(if (state.bestCombo > 0) "×${state.bestCombo}" else "—", stringResource(R.string.stats_combo), AccentCombo, Modifier.weight(1f))
+                StatTile(state.levelsCleared.toString(), stringResource(R.string.stats_levels), accent, Modifier.weight(1f))
+                StatTile(state.perfectClears.toString(), stringResource(R.string.stats_perfect), GoldText, Modifier.weight(1f))
+                StatTile(if (state.bestCombo > 0) "×${state.bestCombo}" else "—", stringResource(R.string.stats_combo), dailyAccent, Modifier.weight(1f))
             }
 
             Spacer(Modifier.height(6.dp))
@@ -235,42 +229,43 @@ fun HomeScreen(state: GameUiState, vm: GameViewModel) {
     }
 }
 
-/** Four arrows of the current garden's colours, gently breathing. Decorative only. */
+/**
+ * A tiny board drawn with the game's own arrows: three winding lines on a dot grid, the free
+ * one glowing in the garden colour. Decorative only.
+ */
 @Composable
-private fun HeroArrows(state: GameUiState) {
+private fun HeroBoard(accent: androidx.compose.ui.graphics.Color) {
     val reduceMotion = LocalReduceMotion.current
-    val amplitude = with(LocalDensity.current) { 3.dp.toPx() }
     val transition = rememberInfiniteTransition(label = "hero")
-    val float by transition.animateFloat(
-        initialValue = if (reduceMotion) 0f else -amplitude,
-        targetValue = if (reduceMotion) 0f else amplitude,
-        animationSpec = infiniteRepeatable(tween(2200, easing = FastOutSlowInEasing), RepeatMode.Reverse),
-        label = "heroFloat",
+    val glow by transition.animateFloat(
+        initialValue = if (reduceMotion) 1f else 0.45f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(1400, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        label = "heroGlow",
     )
-    val path = remember {
-        Path().apply {
-            moveTo(0f, -0.38f); lineTo(0.29f, 0.05f); lineTo(0.11f, 0.05f); lineTo(0.11f, 0.33f)
-            lineTo(-0.11f, 0.33f); lineTo(-0.11f, 0.05f); lineTo(-0.29f, 0.05f); close()
+    Canvas(Modifier.fillMaxWidth().height(104.dp)) {
+        val cols = 8
+        val rows = 3
+        val cell = minOf(size.width / cols, size.height / rows)
+        val ox = (size.width - cols * cell) / 2f
+        val oy = (size.height - rows * cell) / 2f
+        fun px(r: Int, c: Int) = Offset(ox + (c + 0.5f) * cell, oy + (r + 0.5f) * cell)
+        // Tail first, head last.
+        val arrows = listOf(
+            Triple(listOf(2 to 0, 1 to 0, 0 to 0, 0 to 1, 0 to 2), Direction.RIGHT, false),
+            Triple(listOf(2 to 2, 2 to 3, 1 to 3, 0 to 3), Direction.UP, true),
+            Triple(listOf(0 to 7, 1 to 7, 1 to 6, 2 to 6, 2 to 5, 2 to 4), Direction.LEFT, false),
+            Triple(listOf(0 to 5, 1 to 5, 1 to 4), Direction.LEFT, false),
+        )
+        val used = arrows.flatMap { it.first }.toSet()
+        for (r in 0 until rows) for (c in 0 until cols) {
+            if ((r to c) !in used) drawCircle(DotColor, cell * 0.075f, px(r, c))
         }
-    }
-    val colors = state.palette.arrows
-    Canvas(Modifier.fillMaxWidth().height(96.dp)) {
-        val cell = size.height * 0.9f
-        val gap = cell * 1.15f
-        val startX = size.width / 2f - gap * 1.5f
-        val angles = listOf(0f, 90f, 180f, 270f)
-        for (i in 0 until 4) {
-            val cx = startX + i * gap
-            val cy = size.height / 2f + (if (i % 2 == 0) float else -float)
-            withTransform({
-                translate(cx, cy)
-                rotate(angles[i], pivot = Offset.Zero)
-                scale(cell, cell, pivot = Offset.Zero)
-            }) {
-                drawPath(path, color = colors[i % colors.size])
-                drawPath(path, color = Color.White.copy(alpha = 0.8f), style = Stroke(width = 0.035f))
-                drawCircle(Color.White.copy(alpha = 0.9f), radius = 0.06f, center = Offset(0f, -0.08f))
-            }
+        val stroke = cell * 0.15f
+        for ((cells, dir, free) in arrows) {
+            val pts = cells.map { (r, c) -> px(r, c) }
+            val tail = pts[0] + (pts[0] - pts[1]) * 0.22f
+            drawLineArrow(listOf(tail) + pts, dir, stroke, if (free) accent else Ink, 1f, if (free) accent.copy(alpha = 0.22f * glow) else null)
         }
     }
 }

@@ -3,25 +3,34 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Arrow Bloom icon: Dynamic 4-way arrow bloom pattern centered in safe zone (26..82) -->
-    <!-- Up arrow (Cyan) -->
+    <!-- Arrow Bloom icon: two line arrows on a dot grid, inside the 66dp safe zone.
+         The ink arrow is blocked by the green one; the green one has a free path up. -->
+    <path android:fillColor="#C0C7D6" android:pathData="M34,38m-2.3,0a2.3,2.3 0,1 1,4.6 0a2.3,2.3 0,1 1,-4.6 0" />
+    <path android:fillColor="#C0C7D6" android:pathData="M46,38m-2.3,0a2.3,2.3 0,1 1,4.6 0a2.3,2.3 0,1 1,-4.6 0" />
+    <path android:fillColor="#C0C7D6" android:pathData="M58,38m-2.3,0a2.3,2.3 0,1 1,4.6 0a2.3,2.3 0,1 1,-4.6 0" />
+    <path android:fillColor="#C0C7D6" android:pathData="M46,62m-2.3,0a2.3,2.3 0,1 1,4.6 0a2.3,2.3 0,1 1,-4.6 0" />
+    <path android:fillColor="#C0C7D6" android:pathData="M58,62m-2.3,0a2.3,2.3 0,1 1,4.6 0a2.3,2.3 0,1 1,-4.6 0" />
+    <!-- glow behind the free arrow -->
     <path
-        android:fillColor="#00E5FF"
-        android:pathData="M54,28 L64,40 L57,40 L57,50 L51,50 L51,40 L44,40 Z" />
-    <!-- Right arrow (Amber) -->
+        android:pathData="M44,74 L70,74 L70,38"
+        android:strokeColor="#3823A05A"
+        android:strokeWidth="11"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+    <!-- ink arrow: up then right, head pointing right -->
     <path
-        android:fillColor="#FFD600"
-        android:pathData="M80,54 L68,64 L68,57 L58,57 L58,51 L68,51 L68,44 Z" />
-    <!-- Down arrow (Pink) -->
+        android:pathData="M34,76 L34,50 L58,50"
+        android:strokeColor="#1D2A4D"
+        android:strokeWidth="4.4"
+        android:strokeLineCap="butt"
+        android:strokeLineJoin="miter" />
+    <path android:fillColor="#1D2A4D" android:pathData="M64,50 L57,44.6 L57,55.4 Z" />
+    <!-- green arrow: right then up, head pointing up -->
     <path
-        android:fillColor="#FF2A7A"
-        android:pathData="M54,80 L44,68 L51,68 L51,58 L57,58 L57,68 L64,68 Z" />
-    <!-- Left arrow (Emerald) -->
-    <path
-        android:fillColor="#00E676"
-        android:pathData="M28,54 L40,44 L40,51 L50,51 L50,57 L40,57 L40,64 Z" />
-    <!-- Center core jewel -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M54,48 L60,54 L54,60 L48,54 Z" />
+        android:pathData="M44,74 L70,74 L70,38"
+        android:strokeColor="#237A4B"
+        android:strokeWidth="4.4"
+        android:strokeLineCap="butt"
+        android:strokeLineJoin="miter" />
+    <path android:fillColor="#237A4B" android:pathData="M70,32 L64.6,39 L75.4,39 Z" />
 </vector>

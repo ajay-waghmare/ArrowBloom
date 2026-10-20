@@ -26,19 +26,25 @@ class DailyBloomTest {
         assertEquals(a.arrows.keys, b.arrows.keys)
         for (id in a.arrows.keys) assertEquals(a.arrows[id], b.arrows[id])
         assertTrue(PuzzleSolver.isSolvable(a))
-        assertTrue(a.totalArrows in 12..24)
-        for (i in 0 until 30) assertTrue(PuzzleSolver.isSolvable(DailyBloom.board(d.plusDays(i.toLong()))))
+        assertTrue("daily arrows ${a.totalArrows}", a.totalArrows >= 15)
+        val shapes = HashSet<com.aweagle.arrowbloom.engine.BoardShape>()
+        for (i in 0 until 30) {
+            val day = DailyBloom.board(d.plusDays(i.toLong()))
+            assertTrue(PuzzleSolver.isSolvable(day))
+            shapes.add(day.shape)
+        }
+        assertTrue("the daily board changes shape through the week", shapes.size >= 4)
     }
 
     @Test fun shareText_isSpoilerFree() {
         val t = DailyBloom.shareText(number = 12, stars = 3, arrows = 24, blockedTaps = 0, storeUrl = "https://example.test/app")
         assertTrue(t.contains("Daily #12"))
         assertTrue(t.contains("⭐⭐⭐"))
-        assertTrue(t.contains("perfect clear"))
+        assertTrue(t.contains("no hearts lost"))
         assertTrue(t.endsWith("https://example.test/app"))
-        val u = DailyBloom.shareText(number = 3, stars = 1, arrows = 20, blockedTaps = 4, storeUrl = "u")
+        val u = DailyBloom.shareText(number = 3, stars = 1, arrows = 20, blockedTaps = 2, storeUrl = "u")
         assertTrue(u.contains("⭐☆☆"))
-        assertTrue(u.contains("4 blocked taps"))
-        assertTrue(DailyBloom.shareText(1, 2, 20, 1, "u").contains("1 blocked tap\n"))
+        assertTrue(u.contains("2 hearts lost"))
+        assertTrue(DailyBloom.shareText(1, 2, 20, 1, "u").contains("1 heart lost\n"))
     }
 }

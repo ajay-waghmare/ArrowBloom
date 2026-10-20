@@ -6,11 +6,15 @@ package com.aweagle.arrowbloom.engine
  * @param rows Board height in grid cells.
  * @param cols Board width in grid cells.
  * @param arrows Map of arrow ID to Arrow data.
+ * @param shape Outline of the playable area inside the rows x cols rectangle (a heart, a
+ *   flower...). Cells outside it are never occupied and are not drawn; arrows still fly
+ *   through them on the way out, because escape is measured to the rectangle's edge.
  */
 data class Board(
     val rows: Int,
     val cols: Int,
-    val arrows: Map<Int, Arrow>
+    val arrows: Map<Int, Arrow>,
+    val shape: BoardShape = BoardShape.RECT,
 ) {
     // Fast lookup from GridPos to Arrow ID
     private val cellMap: Map<GridPos, Int> by lazy {
@@ -23,6 +27,10 @@ data class Board(
             }
         }
         map
+    }
+
+    private val playable: BooleanArray by lazy {
+        BooleanArray(rows * cols) { i -> shape.contains(i / cols, i % cols, rows, cols) }
     }
 
     val activeArrows: List<Arrow>
@@ -45,6 +53,9 @@ data class Board(
     fun getArrowById(id: Int): Arrow? = arrows[id]
 
     fun isInside(pos: GridPos): Boolean = pos.isInside(rows, cols)
+
+    /** Inside the rectangle and inside the shape: a cell that can hold an arrow or show a dot. */
+    fun isPlayable(pos: GridPos): Boolean = isInside(pos) && playable[pos.row * cols + pos.col]
 
     fun withArrow(arrow: Arrow): Board {
         val newArrows = arrows.toMutableMap()

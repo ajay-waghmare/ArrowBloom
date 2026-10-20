@@ -2,60 +2,47 @@ package com.aweagle.arrowbloom.engine
 
 sealed class EscapeResult {
     data object CanEscape : EscapeResult()
-    data class Blocked(val blockerId: Int, val collisionPoint: GridPos) : EscapeResult()
+
+    /**
+     * @param blockerId the arrow in the way (the tapped arrow's own id if it would run into itself).
+     * @param collisionPoint the first occupied cell ahead of the head.
+     * @param freeSteps empty cells between the head and that cell: how far the arrow slides
+     *   before it bumps back.
+     */
+    data class Blocked(val blockerId: Int, val collisionPoint: GridPos, val freeSteps: Int) : EscapeResult()
 }
 
 /**
- * Handles raycasts and collision checks to determine whether arrows can escape the board.
+ * Arrows are lines that slide out along their own path, the way a train follows its engine:
+ * the head moves forward in its direction and every body cell steps into the cell in front of
+ * it. Over the whole move the arrow only ever covers its own cells and the cells straight
+ * ahead of its head, so an arrow can leave exactly when the line from its head to the edge of
+ * the board is empty.
  */
 object CollisionDetector {
 
-    /**
-     * Determines whether [arrow] can move along its [Arrow.direction] and escape the [board].
-     *
-     * The arrow escapes if every cell of its body can sweep outward indefinitely
-     * without hitting any other active arrow on the board.
-     */
     fun checkEscape(arrow: Arrow, board: Board): EscapeResult {
-        val dir = arrow.direction
-        val maxSteps = maxOf(board.rows, board.cols)
-
-        // For each segment of the arrow, raycast forward along the movement direction
-        for (segment in arrow.body) {
-            for (step in 1..maxSteps) {
-                val nextPos = segment.moved(dir, step)
-                if (!board.isInside(nextPos)) {
-                    // This segment has escaped the boundary
-                    break
-                }
-
-                // If nextPos is part of this arrow's own body, it does not block itself
-                if (arrow.occupies(nextPos)) {
-                    continue
-                }
-
-                // Check if another active arrow occupies this cell
-                val blocker = board.getArrowAt(nextPos)
-                if (blocker != null && blocker.id != arrow.id) {
-                    return EscapeResult.Blocked(blocker.id, nextPos)
-                }
-            }
+        var step = 1
+        while (true) {
+            val next = arrow.head.moved(arrow.direction, step)
+            if (!board.isInside(next)) return EscapeResult.CanEscape
+            if (arrow.occupies(next)) return EscapeResult.Blocked(arrow.id, next, step - 1)
+            val blocker = board.getArrowAt(next)
+            if (blocker != null && blocker.id != arrow.id) return EscapeResult.Blocked(blocker.id, next, step - 1)
+            step++
         }
-
-        return EscapeResult.CanEscape
     }
 
-    /**
-     * Convenience function returning true if the arrow can escape unobstructed.
-     */
-    fun canArrowEscape(arrow: Arrow, board: Board): Boolean {
-        return checkEscape(arrow, board) is EscapeResult.CanEscape
-    }
+    fun canArrowEscape(arrow: Arrow, board: Board): Boolean = checkEscape(arrow, board) is EscapeResult.CanEscape
 
-    /**
-     * Returns all currently active arrows on the board that have a clear path to escape.
-     */
-    fun findEscapableArrows(board: Board): List<Arrow> {
-        return board.activeArrows.filter { canArrowEscape(it, board) }
+    /** All active arrows that can leave right now. */
+    fun findEscapableArrows(board: Board): List<Arrow> = board.activeArrows.filter { canArrowEscape(it, board) }
+
+    /** Cells from the head to the edge of the board's rectangle, the head excluded. */
+    fun rayLength(head: GridPos, direction: Direction, rows: Int, cols: Int): Int = when (direction) {
+        Direction.UP -> head.row
+        Direction.DOWN -> rows - 1 - head.row
+        Direction.LEFT -> head.col
+        Direction.RIGHT -> cols - 1 - head.col
     }
 }

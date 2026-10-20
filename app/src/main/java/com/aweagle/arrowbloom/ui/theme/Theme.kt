@@ -1,29 +1,29 @@
 package com.aweagle.arrowbloom.ui.theme
 
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 
-private val DarkColorScheme = darkColorScheme(
-    primary = ArrowCyan,
-    secondary = ArrowPink,
-    tertiary = ArrowGold,
-    background = BgDark,
-    surface = SurfaceDark,
-    surfaceVariant = SurfaceCard,
-    onPrimary = BgDark,
-    onSecondary = BgDark,
-    onBackground = TextPrimary,
-    onSurface = TextPrimary,
+private val LightColors = lightColorScheme(
+    primary = Palettes.LAGOON.accent,
+    onPrimary = OnAccent,
+    secondary = Palettes.DAILY.accent,
+    onSecondary = OnAccent,
+    tertiary = StarGold,
+    background = Paper,
+    onBackground = Ink,
+    surface = SurfaceCard,
+    onSurface = Ink,
+    surfaceVariant = SurfaceSoft,
     onSurfaceVariant = TextSecondary,
+    outline = SurfaceBorder,
 )
 
 /**
- * Always dark: the neon arrows need a deep background. System bars are handled by
- * `enableEdgeToEdge()` in MainActivity and inset padding on each screen, not by the
- * deprecated window colour properties.
+ * Always light: dark ink lines on paper, the way a logic puzzle reads best. System bar icons
+ * are set dark in MainActivity (`SystemBarStyle.light`), so they stay visible on the paper.
  */
 @Composable
 fun ArrowBloomTheme(content: @Composable () -> Unit) {
-    MaterialTheme(colorScheme = DarkColorScheme, content = content)
+    MaterialTheme(colorScheme = LightColors, content = content)
 }

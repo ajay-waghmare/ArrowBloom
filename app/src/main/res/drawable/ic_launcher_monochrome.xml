@@ -2,21 +2,22 @@
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
-    android:viewportHeight="108"
-    android:tint="#000000">
+    android:viewportHeight="108">
+    <!-- Themed (monochrome) icon: the same two line arrows, one colour; the system tints it. -->
+    <path android:fillColor="#FFFFFFFF" android:pathData="M46,62m-2.3,0a2.3,2.3 0,1 1,4.6 0a2.3,2.3 0,1 1,-4.6 0" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M58,62m-2.3,0a2.3,2.3 0,1 1,4.6 0a2.3,2.3 0,1 1,-4.6 0" />
     <path
-        android:fillColor="#000000"
-        android:pathData="M54,28 L64,40 L57,40 L57,50 L51,50 L51,40 L44,40 Z" />
+        android:pathData="M34,76 L34,50 L58,50"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="4.4"
+        android:strokeLineCap="butt"
+        android:strokeLineJoin="miter" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M64,50 L57,44.6 L57,55.4 Z" />
     <path
-        android:fillColor="#000000"
-        android:pathData="M80,54 L68,64 L68,57 L58,57 L58,51 L68,51 L68,44 Z" />
-    <path
-        android:fillColor="#000000"
-        android:pathData="M54,80 L44,68 L51,68 L51,58 L57,58 L57,68 L64,68 Z" />
-    <path
-        android:fillColor="#000000"
-        android:pathData="M28,54 L40,44 L40,51 L50,51 L50,57 L40,57 L40,64 Z" />
-    <path
-        android:fillColor="#000000"
-        android:pathData="M54,48 L60,54 L54,60 L48,54 Z" />
+        android:pathData="M44,74 L70,74 L70,38"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="4.4"
+        android:strokeLineCap="butt"
+        android:strokeLineJoin="miter" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M70,32 L64.6,39 L75.4,39 Z" />
 </vector>

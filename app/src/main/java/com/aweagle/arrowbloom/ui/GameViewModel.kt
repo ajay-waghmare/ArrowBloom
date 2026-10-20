@@ -18,12 +18,14 @@ import com.aweagle.arrowbloom.data.SavedRun
 import com.aweagle.arrowbloom.data.StreakRules
 import com.aweagle.arrowbloom.engine.Arrow
 import com.aweagle.arrowbloom.engine.Board
+import com.aweagle.arrowbloom.engine.Difficulty
 import com.aweagle.arrowbloom.engine.GameEngine
 import com.aweagle.arrowbloom.engine.Gardens
-import com.aweagle.arrowbloom.engine.GridPos
 import com.aweagle.arrowbloom.engine.PuzzleGenerator
+import com.aweagle.arrowbloom.engine.PuzzleStats
 import com.aweagle.arrowbloom.engine.Scoring
 import com.aweagle.arrowbloom.engine.TapResult
+import com.aweagle.arrowbloom.ui.components.bumpDurationMs
 import com.aweagle.arrowbloom.ui.theme.GardenPalette
 import com.aweagle.arrowbloom.ui.theme.Palettes
 import kotlinx.coroutines.Job
@@ -37,20 +39,18 @@ import java.time.LocalDate
 
 enum class Screen { HOME, GAME, SETTINGS }
 
-/** An arrow left the board; the canvas animates it out and blooms its cell. */
+/** An arrow left the board; the canvas slides it out along its line and blooms the exit. */
 data class EscapeEvent(val seq: Long, val arrow: Arrow, val combo: Int)
 
-/** A tap hit a blocked arrow; the canvas shakes it. */
-data class BlockedEvent(val seq: Long, val arrowId: Int)
+/** A wrong tap: the arrow slides [freeSteps] cells, bumps [blockerId] and comes back. */
+data class BlockedEvent(val seq: Long, val arrowId: Int, val blockerId: Int, val freeSteps: Int)
 
 /** The card shown when a board is cleared. */
 data class Outcome(
     val mode: RunMode,
     val level: Int,
-    val score: Int,
     val stars: Int,
-    val blockedTaps: Int,
-    val par: Int,
+    val heartsLost: Int,
     val isNewBest: Boolean,
     val dailyNumber: Int = 0,
     val streak: Int = 0,
@@ -63,23 +63,23 @@ data class GameUiState(
     val screen: Screen = Screen.HOME,
     // the run on screen
     val mode: RunMode = RunMode.LEVEL,
-    val board: Board = Board.empty(4, 4),
+    val board: Board = Board.empty(6, 5),
+    /** Changes whenever a new board starts, so the canvas drops animations of the old one. */
+    val boardSeq: Long = 0,
     val palette: GardenPalette = Palettes.MEADOW,
     val level: Int = 1,
     @StringRes val gardenNameRes: Int = R.string.garden_meadow,
     val gardenPosition: Int = 1,
     val gardenSize: Int = Gardens.LEVELS_PER_GARDEN,
     val dailyNumber: Int = 0,
-    val score: Int = 0,
-    val combo: Int = 0,
-    val colorStreak: Int = 0,
+    val difficulty: Difficulty = Difficulty.EASY,
     val totalArrows: Int = 0,
     val remainingArrows: Int = 0,
-    val blockedTaps: Int = 0,
-    val starsSoFar: Int = Scoring.MAX_STARS,
+    val heartsLeft: Int = Scoring.MAX_HEARTS,
+    val failed: Boolean = false,
     val hintArrowId: Int? = null,
     val hintsRemaining: Int = HINTS_PER_BOARD,
-    val canUndo: Boolean = false,
+    val showGrid: Boolean = false,
     val escapeEvent: EscapeEvent? = null,
     val blockedEvent: BlockedEvent? = null,
     val outcome: Outcome? = null,
@@ -124,10 +124,13 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     private var engine: GameEngine? = null
     private var mode: RunMode = RunMode.LEVEL
     private var dailyDate: LocalDate = LocalDate.now()
+    private var difficulty: Difficulty = Difficulty.EASY
     private var hintsUsed = 0
     private var seq = 0L
+    private var boardSeq = 0L
     private var hintJob: Job? = null
     private var inForeground = false
+    private var settingsFrom: Screen = Screen.HOME
     private var dailyArrowsCache: Pair<Long, Int>? = null
 
     private val _uiState = MutableStateFlow(GameUiState())
@@ -137,7 +140,9 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
         music.setMusicOn(prefs.musicOn)
         music.setSoundOn(prefs.soundOn)
         restoreSavedRun()
-        _uiState.update { refreshHome(it).copy(soundOn = prefs.soundOn, musicOn = prefs.musicOn, hapticsOn = prefs.hapticsOn) }
+        _uiState.update {
+            refreshHome(it).copy(soundOn = prefs.soundOn, musicOn = prefs.musicOn, hapticsOn = prefs.hapticsOn, showGrid = prefs.gridOn)
+        }
     }
 
     // ----- lifecycle ---------------------------------------------------------------
@@ -163,16 +168,25 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
 
     fun goHome() {
         saveRun()
-        _uiState.update { refreshHome(it).copy(screen = Screen.HOME, hintArrowId = null) }
+        // Refresh as the Home screen, so Home takes the Journey garden's look, not the board's (e.g. the Daily pink).
+        _uiState.update { refreshHome(it.copy(screen = Screen.HOME)).copy(hintArrowId = null) }
     }
 
-    fun openSettings() = _uiState.update { it.copy(screen = Screen.SETTINGS) }
-    fun closeSettings() = _uiState.update { refreshHome(it).copy(screen = Screen.HOME) }
+    fun openSettings() {
+        settingsFrom = _uiState.value.screen.takeIf { it != Screen.SETTINGS } ?: Screen.HOME
+        _uiState.update { it.copy(screen = Screen.SETTINGS) }
+    }
+
+    /** Back from Settings goes where Settings was opened from: Home or the board in play. */
+    fun closeSettings() {
+        val back = if (settingsFrom == Screen.GAME && engine != null) Screen.GAME else Screen.HOME
+        _uiState.update { if (back == Screen.GAME) gameState(it).copy(screen = back) else refreshHome(it.copy(screen = back)) }
+    }
 
     /** Home's main button: resume the saved run if there is one, else start the current level. */
     fun playOrContinue() {
         val e = engine
-        if (e != null && !e.isLevelCompleted && _uiState.value.hasSavedRun) {
+        if (e != null && !e.isLevelCompleted && !e.isFailed && _uiState.value.hasSavedRun) {
             _uiState.update { gameState(it).copy(screen = Screen.GAME) }
         } else {
             startLevel(prefs.currentLevel)
@@ -199,6 +213,8 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
 
     private fun enterGame() {
         hintJob?.cancel()
+        boardSeq++
+        difficulty = engine?.let { PuzzleStats.difficultyOf(it.board) } ?: Difficulty.EASY
         saveRun()
         val coach = if (mode == RunMode.LEVEL && !prefs.coached && engine?.levelNumber == 1) R.string.coach_tap_arrow else null
         _uiState.update {
@@ -231,10 +247,10 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
 
     // ----- play ------------------------------------------------------------------------
 
-    fun onCellTapped(pos: GridPos) {
+    fun onArrowTapped(arrowId: Int) {
         val e = engine ?: return
-        if (_uiState.value.outcome != null) return
-        when (val result = e.onCellTapped(pos)) {
+        if (_uiState.value.outcome != null || _uiState.value.failed) return
+        when (val result = e.onArrowTapped(arrowId)) {
             is TapResult.Escaped -> onEscaped(e, result)
             is TapResult.Blocked -> onBlocked(e, result)
             else -> Unit
@@ -244,7 +260,7 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     private fun onEscaped(e: GameEngine, result: TapResult.Escaped) {
         seq++
         music.escapeNote(result.combo, result.arrow.head.col, e.board.cols)
-        music.setIntensity(result.combo / 8f)
+        music.setIntensity(result.combo / 10f)
         feedback.escape(result.combo)
         prefs.arrowsEscaped += 1
         if (result.combo > prefs.bestCombo) prefs.bestCombo = result.combo
@@ -278,21 +294,27 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
         analytics.event(Analytics.BLOCKED_TAP, mapOf("level" to e.levelNumber))
         _uiState.update {
             gameState(it).copy(
-                blockedEvent = BlockedEvent(seq, result.arrow.id),
+                blockedEvent = BlockedEvent(seq, result.arrow.id, result.blockerId, result.freeSteps),
                 coachTextRes = if (it.coachTextRes != null) R.string.coach_blocked else null,
+                hintArrowId = null,
             )
         }
-        saveRun()
+        if (result.isFailed) prefs.savedRun = null else saveRun()
         val id = result.arrow.id
         viewModelScope.launch {
-            delay(SHAKE_MS)
+            delay(bumpDurationMs(result.freeSteps))
             e.resetBlockedState(id)
+            if (engine !== e) return@launch
+            if (result.isFailed) {
+                analytics.event(Analytics.LEVEL_FAILED, mapOf("level" to e.levelNumber))
+                music.setIntensity(0f)
+            }
             _uiState.update { gameState(it) }
         }
     }
 
     private fun finishBoard(e: GameEngine) {
-        if (!e.isLevelCompleted || _uiState.value.outcome != null) return
+        if (!e.isLevelCompleted || _uiState.value.outcome != null || engine !== e) return
         val stars = e.starsSoFar
         val level = e.levelNumber
         music.bloomRun()
@@ -308,7 +330,7 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
             if (level > prefs.highestCleared) prefs.highestCleared = level
             if (prefs.currentLevel <= level) prefs.currentLevel = level + 1
             analytics.event(Analytics.LEVEL_COMPLETE, mapOf("level" to level, "stars" to stars, "blocked" to e.blockedTaps))
-            Outcome(RunMode.LEVEL, level, e.score, stars, e.blockedTaps, e.par, newBest)
+            Outcome(RunMode.LEVEL, level, stars, e.blockedTaps, newBest)
         } else {
             val today = dailyDate.toEpochDay()
             val advanced = StreakRules.advance(prefs.lastDailyDay, today, prefs.dailyStreak, prefs.streakShieldUsed)
@@ -329,7 +351,7 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
             val number = DailyBloom.numberFor(dailyDate)
             analytics.event(Analytics.DAILY_COMPLETE, mapOf("number" to number, "stars" to stars))
             Outcome(
-                RunMode.DAILY, level, e.score, stars, e.blockedTaps, e.par,
+                RunMode.DAILY, level, stars, e.blockedTaps,
                 isNewBest = advanced != null,
                 dailyNumber = number,
                 streak = prefs.dailyStreak,
@@ -340,20 +362,9 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
         _uiState.update { refreshHome(gameState(it)).copy(outcome = outcome, coachTextRes = null, hintArrowId = null) }
     }
 
-    fun undo() {
-        val e = engine ?: return
-        if (_uiState.value.outcome != null) return
-        if (!e.undo()) return
-        music.undoNote()
-        feedback.tap()
-        analytics.event(Analytics.UNDO)
-        _uiState.update { gameState(it).copy(hintArrowId = null) }
-        saveRun()
-    }
-
     fun hint() {
         val e = engine ?: return
-        if (_uiState.value.outcome != null) return
+        if (_uiState.value.outcome != null || _uiState.value.failed) return
         val left = _uiState.value.hintsRemaining
         if (left <= 0) { toast(getApplication<Application>().getString(R.string.no_hints_left)); return }
         val id = e.getHintArrowId() ?: return
@@ -370,15 +381,27 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    fun toggleGrid() {
+        prefs.gridOn = !prefs.gridOn
+        feedback.tap()
+        _uiState.update { it.copy(showGrid = prefs.gridOn) }
+    }
+
     // ----- debug-only test hooks (BuildConfig.DEBUG; R8 drops them from release) -----------
 
-    /** Taps the first escapable arrow, as a tester would with a hint. */
+    /** Taps the hinted arrow, as a tester would. */
     fun debugAutoTap() {
         if (!BuildConfig.DEBUG) return
+        val id = engine?.getHintArrowId() ?: return
+        onArrowTapped(id)
+    }
+
+    /** Taps an arrow that cannot leave, to test the bump and the hearts. */
+    fun debugWrongTap() {
+        if (!BuildConfig.DEBUG) return
         val e = engine ?: return
-        val id = e.getHintArrowId() ?: return
-        val arrow = e.board.getArrowById(id) ?: return
-        onCellTapped(arrow.head)
+        val stuck = e.board.activeArrows.firstOrNull { !com.aweagle.arrowbloom.engine.CollisionDetector.canArrowEscape(it, e.board) } ?: return
+        onArrowTapped(stuck.id)
     }
 
     /** Jumps the Journey to the first level of the next garden. */
@@ -388,6 +411,15 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
         val next = Gardens.ALL.firstOrNull { it.firstLevel > current } ?: return
         prefs.currentLevel = maxOf(prefs.currentLevel, next.firstLevel)
         startLevel(next.firstLevel)
+    }
+
+    /** Jumps five levels ahead (the next shaped board). */
+    fun debugSkipFive() {
+        if (!BuildConfig.DEBUG) return
+        val current = engine?.takeIf { mode == RunMode.LEVEL }?.levelNumber ?: prefs.currentLevel
+        val target = (current / 5 + 1) * 5
+        prefs.currentLevel = maxOf(prefs.currentLevel, target)
+        startLevel(target)
     }
 
     fun onShared() {
@@ -427,30 +459,29 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
         val e = engine ?: return s
         val isDaily = mode == RunMode.DAILY
         val garden = Gardens.forLevel(e.levelNumber)
+        val bumping = e.board.activeArrows.any { it.state == com.aweagle.arrowbloom.engine.ArrowState.BLOCKED }
         return s.copy(
             mode = mode,
             board = e.board,
+            boardSeq = boardSeq,
             palette = if (isDaily) Palettes.DAILY else Palettes.forGarden(garden.index),
             level = e.levelNumber,
             gardenNameRes = garden.nameRes,
             gardenPosition = garden.positionOf(e.levelNumber),
             gardenSize = if (garden.isEndless) 0 else garden.levelCount,
             dailyNumber = if (isDaily) DailyBloom.numberFor(dailyDate) else 0,
-            score = e.score,
-            combo = e.combo,
-            colorStreak = e.colorStreak,
+            difficulty = difficulty,
             totalArrows = e.totalArrowsCount,
             remainingArrows = e.remainingArrowsCount,
-            blockedTaps = e.blockedTaps,
-            starsSoFar = e.starsSoFar,
-            canUndo = e.canUndo,
+            heartsLeft = e.heartsLeft,
+            failed = e.isFailed && !bumping,
         )
     }
 
     private fun refreshHome(s: GameUiState): GameUiState {
         val today = LocalDate.now()
         val e = engine
-        val saved = e != null && !e.isLevelCompleted && e.escapeOrder.isNotEmpty()
+        val saved = e != null && !e.isLevelCompleted && !e.isFailed && e.escapeOrder.isNotEmpty()
         val current = prefs.currentLevel
         val garden = Gardens.forLevel(current)
         val stars = prefs.bestStars()
@@ -463,13 +494,13 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
             hasSavedRun = saved,
             savedRunMode = if (saved) mode else null,
             savedRunLevel = e?.levelNumber ?: current,
-            gardenNameRes = garden.nameRes,
-            gardenPosition = garden.positionOf(current),
-            gardenSize = if (garden.isEndless) 0 else garden.levelCount,
+            gardenNameRes = if (s.screen == Screen.GAME) s.gardenNameRes else garden.nameRes,
+            gardenPosition = if (s.screen == Screen.GAME) s.gardenPosition else garden.positionOf(current),
+            gardenSize = if (s.screen == Screen.GAME) s.gardenSize else if (garden.isEndless) 0 else garden.levelCount,
             gardenStars = gardenStars,
             gardenMaxStars = if (garden.isEndless) 0 else garden.levelCount * Scoring.MAX_STARS,
             palette = if (s.screen == Screen.GAME) s.palette else Palettes.forGarden(garden.index),
-            dailyNumber = DailyBloom.numberFor(today),
+            dailyNumber = if (s.screen == Screen.GAME && s.mode == RunMode.DAILY) s.dailyNumber else DailyBloom.numberFor(today),
             dailyDoneToday = dailyDone,
             dailyStarsToday = if (dailyDone) prefs.dailyStars else 0,
             dailyBlockedToday = if (dailyDone) prefs.dailyBlockedTaps else 0,
@@ -496,7 +527,7 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
 
     private fun saveRun() {
         val e = engine ?: return
-        if (e.isLevelCompleted || _uiState.value.outcome != null) { prefs.savedRun = null; return }
+        if (e.isLevelCompleted || e.isFailed || _uiState.value.outcome != null) { prefs.savedRun = null; return }
         prefs.savedRun = RunCodec.encode(
             SavedRun(
                 mode = mode,
@@ -515,18 +546,20 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
         if (run.mode == RunMode.DAILY && run.dateSeed != DailyBloom.seedFor(today)) { prefs.savedRun = null; return }
         val board = if (run.mode == RunMode.DAILY) DailyBloom.board(today) else PuzzleGenerator.generateLevel(run.level)
         val e = GameEngine(board, if (run.mode == RunMode.DAILY) PuzzleGenerator.DAILY_LEVEL_NUMBER else run.level)
+        val fullBoardDifficulty = PuzzleStats.difficultyOf(board)
         e.restore(run.escapeOrder, run.blockedTaps)
-        if (e.isLevelCompleted || e.escapeOrder.isEmpty()) { prefs.savedRun = null; return }
+        if (e.isLevelCompleted || e.isFailed || e.escapeOrder.isEmpty()) { prefs.savedRun = null; return }
         mode = run.mode
         dailyDate = today
         hintsUsed = run.hintsUsed
         engine = e
+        boardSeq++
+        difficulty = fullBoardDifficulty
         _uiState.update { gameState(it).copy(hintsRemaining = (HINTS_PER_BOARD - run.hintsUsed).coerceAtLeast(0)) }
     }
 
     companion object {
-        private const val COMPLETE_DELAY_MS = 420L
-        private const val SHAKE_MS = 320L
-        private const val HINT_MS = 3500L
+        private const val COMPLETE_DELAY_MS = 520L
+        private const val HINT_MS = 4000L
     }
 }

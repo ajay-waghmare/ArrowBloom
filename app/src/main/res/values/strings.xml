@@ -10,7 +10,6 @@
     <string name="level_n">Level %1$d</string>
     <string name="level_of">Level %1$d of %2$d</string>
     <string name="level_in_garden">%1$s · %2$d/%3$d</string>
-    <string name="level_in_endless">%1$s · Level %2$d</string>
     <string name="stars_collected">%1$d / %2$d</string>
     <string name="play">Play</string>
     <string name="continue_run">Continue</string>
@@ -44,40 +43,35 @@
 
     <!-- Game -->
     <string name="home">Home</string>
-    <string name="undo">Undo</string>
-    <string name="hint_count">Hint (%1$d)</string>
     <string name="no_hints_left">No hints left on this board</string>
     <string name="restart">Restart</string>
     <string name="next_level">Next level</string>
     <string name="replay">Replay</string>
-    <string name="score">Score</string>
     <plurals name="arrows_left">
         <item quantity="one">%1$d arrow left</item>
         <item quantity="other">%1$d arrows left</item>
     </plurals>
-    <string name="combo_badge">×%1$d combo</string>
     <string name="bloom_cleared">Bloom cleared!</string>
     <string name="daily_cleared">Daily Bloom cleared!</string>
-    <string name="perfect_clear">Perfect clear — not a single blocked tap</string>
+    <string name="perfect_clear">Perfect — not a single heart lost</string>
     <plurals name="blocked_taps">
-        <item quantity="one">%1$d blocked tap</item>
-        <item quantity="other">%1$d blocked taps</item>
+        <item quantity="one">%1$d heart lost</item>
+        <item quantity="other">%1$d hearts lost</item>
     </plurals>
     <string name="new_best">New best!</string>
     <string name="coach_tap_arrow">Tap an arrow with a clear path to the edge</string>
-    <string name="coach_blocked">Blocked! Something is in its way. Try another arrow</string>
+    <string name="coach_blocked">Blocked! That cost a heart. Clear what is in front of it first</string>
     <string name="coach_keep_going">Nice. Keep going — the order matters</string>
     <string name="a11y_board">Board of %1$d by %2$d, %3$d arrows left</string>
     <string name="a11y_stars">%1$d of 3 stars</string>
-    <string name="a11y_score">Score %1$d</string>
 
     <!-- How to play -->
-    <string name="htp_1_title">Tap to escape</string>
-    <string name="htp_1_text">Tap an arrow and it flies off the board the way it points — if nothing stands in its way.</string>
+    <string name="htp_1_title">Tap to slide out</string>
+    <string name="htp_1_text">Tap an arrow and it slides out along its own line, the way its head points — if nothing is in front of the head.</string>
     <string name="htp_2_title">Order matters</string>
-    <string name="htp_2_text">A blocked arrow shakes and costs a star. Clear what is in front of it first. Long arrows need their whole body free.</string>
+    <string name="htp_2_text">A blocked arrow bumps back and costs a heart. You have three per board. Clear what is in front of it first.</string>
     <string name="htp_3_title">Bloom</string>
-    <string name="htp_3_text">Clear the board without a blocked tap for three stars. Chain escapes for combos; the same colour twice in a row earns a bonus.</string>
+    <string name="htp_3_text">Keep all three hearts for three stars. Stuck? A hint lights up an arrow that can leave now. The # button shows the grid.</string>
     <string name="got_it">Got it</string>
 
     <!-- Settings -->
@@ -95,4 +89,15 @@
     <string name="offline_note">Arrow Bloom plays fully offline and collects no data.</string>
     <string name="version_footer" translatable="false">Arrow Bloom  v%1$s (%2$d)</string>
     <string name="share_chooser">Share your Daily Bloom</string>
+    <string name="hint">Hint</string>
+    <string name="grid">Grid</string>
+    <string name="difficulty_easy">Easy</string>
+    <string name="difficulty_normal">Normal</string>
+    <string name="difficulty_hard">Hard</string>
+    <string name="difficulty_expert">Expert</string>
+    <string name="out_of_hearts">Out of hearts</string>
+    <string name="out_of_hearts_text">Same board, fresh hearts. The order is the puzzle — look ahead of each head before you tap.</string>
+    <string name="try_again">Try again</string>
+    <string name="a11y_hearts">%1$d of 3 hearts left</string>
+    <string name="daily_same_for_everyone_short">Same board for everyone</string>
 </resources>

@@ -12,6 +12,7 @@ interface Analytics {
     companion object {
         const val LEVEL_START = "level_start"
         const val LEVEL_COMPLETE = "level_complete"
+        const val LEVEL_FAILED = "level_failed"
         const val DAILY_START = "daily_start"
         const val DAILY_COMPLETE = "daily_complete"
         const val FIRST_ESCAPE = "first_escape"

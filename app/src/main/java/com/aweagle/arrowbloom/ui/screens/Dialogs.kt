@@ -6,12 +6,12 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -37,7 +37,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -57,16 +57,47 @@ import com.aweagle.arrowbloom.ui.TextButton
 import com.aweagle.arrowbloom.ui.components.PrimaryButton
 import com.aweagle.arrowbloom.ui.components.SoftButton
 import com.aweagle.arrowbloom.ui.shareText
-import com.aweagle.arrowbloom.ui.theme.AccentWin
-import com.aweagle.arrowbloom.ui.theme.ArrowGold
+import com.aweagle.arrowbloom.ui.theme.GoldText
+import com.aweagle.arrowbloom.ui.theme.HeartRed
 import com.aweagle.arrowbloom.ui.theme.Scrim
-import com.aweagle.arrowbloom.ui.theme.SurfaceBorder
+import com.aweagle.arrowbloom.ui.theme.StarEmpty
+import com.aweagle.arrowbloom.ui.theme.StarGold
 import com.aweagle.arrowbloom.ui.theme.SurfaceCard
-import com.aweagle.arrowbloom.ui.theme.SurfaceDark
-import com.aweagle.arrowbloom.ui.theme.TextMuted
+import com.aweagle.arrowbloom.ui.theme.SurfaceSoft
 import com.aweagle.arrowbloom.ui.theme.TextPrimary
 import com.aweagle.arrowbloom.ui.theme.TextSecondary
 import kotlinx.coroutines.delay
+
+/** A white card on a dimmed board, scaling in. */
+@Composable
+private fun OverlayCard(onBack: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
+    val reduceMotion = LocalReduceMotion.current
+    val appear = remember { Animatable(0f) }
+    LaunchedEffect(Unit) { if (reduceMotion) appear.snapTo(1f) else appear.animateTo(1f, tween(300)) }
+    BackHandler(onBack = onBack)
+    Box(
+        Modifier
+            .fillMaxSize()
+            .background(Scrim.copy(alpha = Scrim.alpha * appear.value))
+            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {},
+        contentAlignment = Alignment.Center,
+    ) {
+        Surface(
+            shape = RoundedCornerShape(28.dp),
+            color = SurfaceCard,
+            modifier = Modifier
+                .padding(28.dp)
+                .fillMaxWidth()
+                .shadow(16.dp, RoundedCornerShape(28.dp))
+                .graphicsLayer {
+                    val sc = 0.88f + 0.12f * appear.value
+                    scaleX = sc; scaleY = sc; alpha = appear.value
+                },
+        ) {
+            Column(Modifier.padding(24.dp).verticalScroll(rememberScrollState()), horizontalAlignment = Alignment.CenterHorizontally, content = content)
+        }
+    }
+}
 
 /** The card after a cleared board: stars pop in one by one, then the next step. */
 @Composable
@@ -74,100 +105,81 @@ fun OutcomeOverlay(outcome: Outcome, state: GameUiState, vm: GameViewModel) {
     val context = LocalContext.current
     val res = context.resources
     val reduceMotion = LocalReduceMotion.current
-    val appear = remember { Animatable(0f) }
-    LaunchedEffect(Unit) { if (reduceMotion) appear.snapTo(1f) else appear.animateTo(1f, tween(320)) }
-    BackHandler { if (outcome.mode == RunMode.LEVEL) vm.nextLevel() else vm.goHome() }
-
-    Box(
-        Modifier
-            .fillMaxSize()
-            .background(Scrim.copy(alpha = 0.86f * appear.value))
-            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {},
-        contentAlignment = Alignment.Center,
-    ) {
-        Surface(
-            shape = RoundedCornerShape(28.dp),
-            color = SurfaceDark,
-            modifier = Modifier
-                .padding(28.dp)
-                .fillMaxWidth()
-                .border(1.5.dp, SurfaceBorder, RoundedCornerShape(28.dp))
-                .graphicsLayer {
-                    val sc = 0.88f + 0.12f * appear.value
-                    scaleX = sc; scaleY = sc; alpha = appear.value
-                },
-        ) {
-            Column(Modifier.padding(24.dp).verticalScroll(rememberScrollState()), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    stringResource(if (outcome.mode == RunMode.DAILY) R.string.daily_cleared else R.string.bloom_cleared),
-                    color = AccentWin,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Black,
-                    textAlign = TextAlign.Center,
-                )
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    if (outcome.mode == RunMode.DAILY) stringResource(R.string.daily_number, outcome.dailyNumber)
-                    else stringResource(R.string.level_n, outcome.level),
-                    color = TextSecondary,
-                    style = MaterialTheme.typography.titleMedium,
-                )
-                Spacer(Modifier.height(16.dp))
-
-                PoppingStars(outcome.stars, reduceMotion)
-                Spacer(Modifier.height(10.dp))
-                Text(
-                    if (outcome.blockedTaps == 0) stringResource(R.string.perfect_clear)
-                    else res.getQuantityString(R.plurals.blocked_taps, outcome.blockedTaps, outcome.blockedTaps),
-                    color = if (outcome.blockedTaps == 0) ArrowGold else TextSecondary,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    textAlign = TextAlign.Center,
-                )
-                if (outcome.isNewBest && outcome.mode == RunMode.LEVEL) {
-                    Spacer(Modifier.height(6.dp))
-                    Text(stringResource(R.string.new_best), color = ArrowGold, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp)
-                }
-
-                Spacer(Modifier.height(16.dp))
-                Surface(shape = RoundedCornerShape(16.dp), color = SurfaceCard, modifier = Modifier.fillMaxWidth()) {
-                    Column(Modifier.padding(14.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(stringResource(R.string.score).uppercase(), color = TextMuted, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.5.sp)
-                        Text(outcome.score.toString(), color = state.palette.accent, fontSize = 34.sp, fontWeight = FontWeight.Black)
-                    }
-                }
-
-                if (outcome.mode == RunMode.DAILY) {
-                    Spacer(Modifier.height(14.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Filled.LocalFireDepartment, contentDescription = null, tint = ArrowGold, modifier = Modifier.size(20.dp))
-                        Spacer(Modifier.width(6.dp))
-                        Text(res.getQuantityString(R.plurals.streak_days, outcome.streak, outcome.streak), color = TextPrimary, fontWeight = FontWeight.Bold)
-                    }
-                    if (outcome.usedShield) {
-                        Spacer(Modifier.height(4.dp))
-                        Text(stringResource(R.string.shield_used), color = TextSecondary, fontSize = 12.sp, textAlign = TextAlign.Center)
-                    }
-                }
-
-                Spacer(Modifier.height(22.dp))
-                if (outcome.mode == RunMode.LEVEL) {
-                    PrimaryButton(stringResource(R.string.next_level), container = state.palette.accent, onClick = { vm.feedback.tap(); vm.nextLevel() })
-                } else {
-                    PrimaryButton(
-                        stringResource(R.string.share),
-                        leading = Icons.Filled.Share,
-                        container = state.palette.accent,
-                        onClick = { vm.onShared(); outcome.shareText?.let { shareText(context, it) } },
-                    )
-                }
-                Spacer(Modifier.height(10.dp))
-                SoftButton(stringResource(R.string.replay), onClick = { vm.feedback.tap(); vm.replay() })
-                Spacer(Modifier.height(4.dp))
-                TextButton(onClick = { vm.feedback.tap(); vm.goHome() }) {
-                    Text(stringResource(R.string.home), color = TextSecondary, style = MaterialTheme.typography.labelLarge)
-                }
+    val accent = state.palette.accent
+    OverlayCard(onBack = { if (outcome.mode == RunMode.LEVEL) vm.nextLevel() else vm.goHome() }) {
+        Text(
+            stringResource(if (outcome.mode == RunMode.DAILY) R.string.daily_cleared else R.string.bloom_cleared),
+            color = accent,
+            fontSize = 26.sp,
+            fontWeight = FontWeight.Black,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(Modifier.height(4.dp))
+        Text(
+            if (outcome.mode == RunMode.DAILY) stringResource(R.string.daily_number, outcome.dailyNumber) else stringResource(R.string.level_n, outcome.level),
+            color = TextSecondary,
+            style = MaterialTheme.typography.titleMedium,
+        )
+        Spacer(Modifier.height(18.dp))
+        PoppingStars(outcome.stars, reduceMotion)
+        Spacer(Modifier.height(12.dp))
+        Text(
+            if (outcome.heartsLost == 0) stringResource(R.string.perfect_clear) else res.getQuantityString(R.plurals.blocked_taps, outcome.heartsLost, outcome.heartsLost),
+            color = if (outcome.heartsLost == 0) GoldText else TextSecondary,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold,
+            textAlign = TextAlign.Center,
+        )
+        if (outcome.isNewBest && outcome.mode == RunMode.LEVEL) {
+            Spacer(Modifier.height(6.dp))
+            Text(stringResource(R.string.new_best), color = accent, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp)
+        }
+        if (outcome.mode == RunMode.DAILY) {
+            Spacer(Modifier.height(14.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Filled.LocalFireDepartment, contentDescription = null, tint = StarGold, modifier = Modifier.size(20.dp))
+                Spacer(Modifier.width(6.dp))
+                Text(res.getQuantityString(R.plurals.streak_days, outcome.streak, outcome.streak), color = TextPrimary, fontWeight = FontWeight.Bold)
             }
+            if (outcome.usedShield) {
+                Spacer(Modifier.height(4.dp))
+                Text(stringResource(R.string.shield_used), color = TextSecondary, fontSize = 12.sp, textAlign = TextAlign.Center)
+            }
+        }
+        Spacer(Modifier.height(22.dp))
+        if (outcome.mode == RunMode.LEVEL) {
+            PrimaryButton(stringResource(R.string.next_level), container = accent, onClick = { vm.feedback.tap(); vm.nextLevel() })
+        } else {
+            PrimaryButton(
+                stringResource(R.string.share),
+                leading = Icons.Filled.Share,
+                container = accent,
+                onClick = { vm.onShared(); outcome.shareText?.let { shareText(context, it) } },
+            )
+        }
+        Spacer(Modifier.height(10.dp))
+        SoftButton(stringResource(R.string.replay), onClick = { vm.feedback.tap(); vm.replay() })
+        Spacer(Modifier.height(4.dp))
+        TextButton(onClick = { vm.feedback.tap(); vm.goHome() }) {
+            Text(stringResource(R.string.home), color = TextSecondary, style = MaterialTheme.typography.labelLarge)
+        }
+    }
+}
+
+/** Out of hearts: the same board again, or home. */
+@Composable
+fun FailOverlay(state: GameUiState, vm: GameViewModel) {
+    OverlayCard(onBack = { vm.goHome() }) {
+        HeartsRow(0, size = 34)
+        Spacer(Modifier.height(14.dp))
+        Text(stringResource(R.string.out_of_hearts), color = HeartRed, fontSize = 24.sp, fontWeight = FontWeight.Black, textAlign = TextAlign.Center)
+        Spacer(Modifier.height(6.dp))
+        Text(stringResource(R.string.out_of_hearts_text), color = TextSecondary, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center)
+        Spacer(Modifier.height(22.dp))
+        PrimaryButton(stringResource(R.string.try_again), container = state.palette.accent, onClick = { vm.restart() })
+        Spacer(Modifier.height(4.dp))
+        TextButton(onClick = { vm.feedback.tap(); vm.goHome() }) {
+            Text(stringResource(R.string.home), color = TextSecondary, style = MaterialTheme.typography.labelLarge)
         }
     }
 }
@@ -175,7 +187,7 @@ fun OutcomeOverlay(outcome: Outcome, state: GameUiState, vm: GameViewModel) {
 @Composable
 private fun PoppingStars(stars: Int, reduceMotion: Boolean) {
     val desc = stringResource(R.string.a11y_stars, stars)
-    Row(Modifier.clearAndSetSemantics { contentDescription = desc }, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+    Row(Modifier.clearAndSetSemantics { contentDescription = desc }, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         repeat(3) { i ->
             val lit = i < stars
             val scale = remember { Animatable(if (reduceMotion) 1f else 0f) }
@@ -187,12 +199,12 @@ private fun PoppingStars(stars: Int, reduceMotion: Boolean) {
             }
             Box(
                 Modifier
-                    .size(52.dp)
+                    .size(56.dp)
                     .graphicsLayer { scaleX = scale.value; scaleY = scale.value }
-                    .background(if (lit) ArrowGold.copy(alpha = 0.18f) else Color(0x14FFFFFF), CircleShape),
+                    .background(if (lit) StarGold.copy(alpha = 0.16f) else SurfaceSoft, CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(Icons.Filled.Star, contentDescription = null, tint = if (lit) ArrowGold else Color(0x44FFFFFF), modifier = Modifier.size(34.dp))
+                Icon(Icons.Filled.Star, contentDescription = null, tint = if (lit) StarGold else StarEmpty, modifier = Modifier.size(36.dp))
             }
         }
     }
@@ -205,14 +217,14 @@ fun HowToPlayDialog(onDismiss: () -> Unit) {
     Box(
         Modifier
             .fillMaxSize()
-            .background(Scrim.copy(alpha = 0.9f))
+            .background(Scrim)
             .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = onDismiss),
         contentAlignment = Alignment.Center,
     ) {
         Surface(
             shape = RoundedCornerShape(28.dp),
-            color = SurfaceDark,
-            modifier = Modifier.padding(24.dp).fillMaxWidth().border(1.5.dp, SurfaceBorder, RoundedCornerShape(28.dp)),
+            color = SurfaceCard,
+            modifier = Modifier.padding(24.dp).fillMaxWidth().shadow(16.dp, RoundedCornerShape(28.dp)),
         ) {
             Column(Modifier.padding(24.dp).verticalScroll(rememberScrollState())) {
                 Text(stringResource(R.string.how_to_play), color = TextPrimary, fontSize = 22.sp, fontWeight = FontWeight.Black)
@@ -230,7 +242,7 @@ fun HowToPlayDialog(onDismiss: () -> Unit) {
 @Composable
 private fun HowToStep(number: String, title: String, text: String) {
     Row(Modifier.padding(bottom = 14.dp)) {
-        Box(Modifier.size(28.dp).background(SurfaceCard, CircleShape), contentAlignment = Alignment.Center) {
+        Box(Modifier.size(28.dp).background(SurfaceSoft, CircleShape), contentAlignment = Alignment.Center) {
             Text(number, color = TextPrimary, fontWeight = FontWeight.Black, fontSize = 13.sp)
         }
         Spacer(Modifier.width(12.dp))

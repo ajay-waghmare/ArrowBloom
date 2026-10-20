@@ -15,11 +15,15 @@ data class SavedRun(
 /**
  * Text form of a [SavedRun] for the single preferences slot. Boards are deterministic from
  * the level number or the date seed, so only the taps need saving.
- * Format: `v1|MODE|level|dateSeed|id,id,id|blockedTaps|hintsUsed`. Garbage decodes to null.
+ * Format: `v2|MODE|level|dateSeed|id,id,id|blockedTaps|hintsUsed`. Garbage decodes to null.
+ *
+ * The header changes whenever the generator changes what a level number produces: arrow ids in
+ * an older save would point at a different board. v1 = build 1 (straight arrows), v2 = build 2
+ * (winding line arrows). An older save decodes to null, so the player simply starts the level fresh.
  */
 object RunCodec {
 
-    private const val HEADER = "v1"
+    private const val HEADER = "v2"
 
     fun encode(run: SavedRun): String = listOf(
         HEADER,

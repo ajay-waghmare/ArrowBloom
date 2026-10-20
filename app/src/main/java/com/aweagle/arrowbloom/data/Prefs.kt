@@ -107,6 +107,11 @@ class Prefs internal constructor(private val sp: SharedPreferences) {
         get() = sp.getBoolean(KEY_HAPTICS, true)
         set(value) = sp.edit { putBoolean(KEY_HAPTICS, value) }
 
+    /** Faint cell grid behind the arrows (the # button on the game screen). */
+    var gridOn: Boolean
+        get() = sp.getBoolean(KEY_GRID, false)
+        set(value) = sp.edit { putBoolean(KEY_GRID, value) }
+
     /** The first-level coaching has been seen through to a completed board. */
     var coached: Boolean
         get() = sp.getBoolean(KEY_COACHED, false)
@@ -139,6 +144,7 @@ class Prefs internal constructor(private val sp: SharedPreferences) {
         private const val KEY_MUSIC = "music_on"
         private const val KEY_HAPTICS = "haptics_on"
         private const val KEY_COACHED = "coached"
+        private const val KEY_GRID = "grid_on"
         private const val KEY_RUN = "saved_run"
     }
 }

@@ -2,29 +2,63 @@
 <html><head><meta charset="utf-8"><title>Arrow Bloom feature graphic</title>
 <style>
   html,body{margin:0;width:1024px;height:500px;overflow:hidden;font-family:"Segoe UI",Roboto,Arial,sans-serif}
-  .bg{position:absolute;inset:0;background:radial-gradient(900px 500px at 30% 50%,#1C2744 0%,#0C101D 60%,#070A14 100%)}
-  .title{position:absolute;left:72px;top:150px;color:#fff;font-weight:900;font-size:78px;letter-spacing:3px;line-height:1;text-shadow:0 6px 18px rgba(0,0,0,.6)}
-  .title span{color:#00E5FF;text-shadow:0 0 24px rgba(0,229,255,.55)}
-  .tag{position:absolute;left:76px;top:250px;color:#8E9BB5;font-size:28px;letter-spacing:1px}
-  .pill{position:absolute;left:76px;top:330px;display:flex;gap:14px}
-  .pill div{background:rgba(255,255,255,.07);border:1px solid #2E3D66;color:#CFD6E6;border-radius:999px;padding:9px 18px;font-size:19px;font-weight:600}
+  .bg{position:absolute;inset:0;background:linear-gradient(180deg,#E3F3E7 0%,#F7FBF8 70%,#FFFFFF 100%)}
+  .title{position:absolute;left:64px;top:156px;color:#1D2A4D;font-weight:900;font-size:62px;letter-spacing:2px;line-height:1}
+  .title span{color:#237A4B}
+  .tag{position:absolute;left:68px;top:226px;color:#5E6A86;font-size:26px;letter-spacing:.5px}
+  .pill{position:absolute;left:66px;top:286px;display:flex;gap:10px}
+  .pill div{background:#FFFFFF;border:1px solid #E3E7F0;color:#1D2A4D;border-radius:999px;padding:8px 15px;font-size:17px;font-weight:600;box-shadow:0 3px 10px rgba(29,42,77,.08)}
+  svg{position:absolute;left:0;top:0}
 </style></head>
 <body>
 <div class="bg"></div>
 <div class="title">ARROW <span>BLOOM</span></div>
 <div class="tag">Tap. Clear. Bloom.</div>
 <div class="pill"><div>No timer</div><div>Plays offline</div><div>One Daily Bloom for everyone</div></div>
-<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;left:700px;top:95px" width="300" height="300" viewBox="0 0 108 108">
-  <defs><radialGradient id="g" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#00E5FF" stop-opacity="0.35"/><stop offset="100%" stop-color="#00E5FF" stop-opacity="0"/></radialGradient></defs>
-  <circle cx="54" cy="54" r="46" fill="url(#g)"/>
-  <g opacity="0.3" fill="#FF8FB1">
-    <ellipse cx="54" cy="31" rx="7" ry="13"/><ellipse cx="77" cy="54" rx="13" ry="7"/><ellipse cx="54" cy="77" rx="7" ry="13"/><ellipse cx="31" cy="54" rx="13" ry="7"/>
-    <g transform="rotate(45 54 54)"><ellipse cx="54" cy="31" rx="7" ry="13"/><ellipse cx="77" cy="54" rx="13" ry="7"/><ellipse cx="54" cy="77" rx="7" ry="13"/><ellipse cx="31" cy="54" rx="13" ry="7"/></g>
-  </g>
-  <path fill="#00E5FF" stroke="#FFFFFF" stroke-opacity="0.85" stroke-width="1.2" d="M54,24 L65,38 L58,38 L58,49 L50,49 L50,38 L43,38 Z"/>
-  <path fill="#FFB800" stroke="#FFFFFF" stroke-opacity="0.85" stroke-width="1.2" d="M84,54 L70,65 L70,58 L59,58 L59,50 L70,50 L70,43 Z"/>
-  <path fill="#FF2A7A" stroke="#FFFFFF" stroke-opacity="0.85" stroke-width="1.2" d="M54,84 L43,70 L50,70 L50,59 L58,59 L58,70 L65,70 Z"/>
-  <path fill="#00E676" stroke="#FFFFFF" stroke-opacity="0.85" stroke-width="1.2" d="M24,54 L38,43 L38,50 L49,50 L49,58 L38,58 L38,65 Z"/>
-  <path fill="#FFFFFF" d="M54,48.5 L59.5,54 L54,59.5 L48.5,54 Z"/>
-</svg>
+<svg id="board" xmlns="http://www.w3.org/2000/svg" width="1024" height="500"></svg>
+<script>
+  // The same kind of board the game draws: winding ink arrows on a dot grid, the free one glowing.
+  const OX = 642, OY = 136, C = 45, ROWS = 6, COLS = 8;
+  const INK = '#1D2A4D', GREEN = '#237A4B', DOT = '#C0C7D6';
+  const arrows = [ // tail first, head last
+    { cells: [[5,0],[4,0],[3,0],[3,1],[3,2]], dir: 'R' },
+    { cells: [[5,2],[5,3],[4,3],[3,3],[2,3],[1,3]], dir: 'U', free: true },
+    { cells: [[0,7],[1,7],[1,6],[2,6],[2,5],[2,4]], dir: 'L' },
+    { cells: [[0,5],[1,5],[1,4]], dir: 'L' },
+    { cells: [[5,7],[4,7],[3,7],[3,6],[3,5]], dir: 'L' },
+    { cells: [[5,6],[5,5],[5,4]], dir: 'L' },
+    { cells: [[1,0],[0,0],[0,1],[0,2]], dir: 'R' },
+  ];
+  const D = { U: [0,-1], D: [0,1], L: [-1,0], R: [1,0] };
+  const px = ([r, c]) => [OX + (c + .5) * C, OY + (r + .5) * C];
+  const used = new Set(arrows.flatMap(a => a.cells.map(([r, c]) => r + ',' + c)));
+  let svg = '';
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+    if (!used.has(r + ',' + c)) { const [x, y] = px([r, c]); svg += `<circle cx="${x}" cy="${y}" r="4" fill="${DOT}"/>`; }
+  }
+  const sw = C * 0.15;
+  for (const a of arrows) {
+    const pts = a.cells.map(px);
+    const [dx, dy] = [pts[0][0] - pts[1][0], pts[0][1] - pts[1][1]];
+    const len = Math.hypot(dx, dy);
+    pts[0] = [pts[0][0] + dx / len * C * .16, pts[0][1] + dy / len * C * .16];
+    const d = 'M' + pts.map(p => p.join(',')).join(' L');
+    const col = a.free ? GREEN : INK;
+    if (a.free) svg += `<path d="${d}" fill="none" stroke="${GREEN}" stroke-opacity=".2" stroke-width="${sw * 3.4}" stroke-linecap="round" stroke-linejoin="round"/>`;
+    svg += `<path d="${d}" fill="none" stroke="${col}" stroke-width="${sw}" stroke-linejoin="miter"/>`;
+    const [hx, hy] = pts[pts.length - 1];
+    const [ux, uy] = D[a.dir];
+    const unit = C, tip = [hx + ux * .40 * unit, hy + uy * .40 * unit], base = [hx - ux * .04 * unit, hy - uy * .04 * unit];
+    const half = .25 * unit, p1 = [base[0] - uy * half, base[1] + ux * half], p2 = [base[0] + uy * half, base[1] - ux * half];
+    svg += `<path d="M${tip} L${p1} L${p2} Z" fill="${col}"/>`;
+  }
+  // Petals opening where the free arrow will leave the board.
+  const [bx] = px([0, 3]); const by = OY - 26;
+  const petals = ['#3DBE7A', '#FF8FB1', '#FFC94D'];
+  for (let k = 0; k < 6; k++) {
+    svg += `<ellipse cx="${bx}" cy="${by - 22}" rx="9" ry="15" fill="${petals[k % 3]}" opacity=".8" transform="rotate(${k * 60 + 20} ${bx} ${by})"/>`;
+  }
+  svg += `<circle cx="${bx}" cy="${by}" r="7" fill="#FFFFFF"/>`;
+  document.getElementById('board').innerHTML = svg;
+</script>
 </body></html>
