@@ -31,7 +31,7 @@ android {
         vectorDrawables { useSupportLibrary = true }
 
         buildConfigField("String", "STORE_URL", "\"https://play.google.com/store/apps/details?id=com.aweagle.arrowbloom\"")
-        buildConfigField("String", "PRIVACY_POLICY_URL", "\"https://ajay-waghmare.github.io/app-policy/privacy-policy.html\"")
+        buildConfigField("String", "PRIVACY_POLICY_URL", "\"https://ajay-waghmare.github.io/app-policy/arrow-bloom-privacy.html\"")
     }
 
     signingConfigs {
